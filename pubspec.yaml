@@ -1,0 +1,4 @@
+name: Bedrock.dart
+
+dependencies:
+  ansicolor: 1.0.2
