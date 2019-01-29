@@ -5,7 +5,7 @@ class Logger {
   String _moduleName;
   String _systemName;
 
-  Logger(String moduleName, { String systemName: 'Bedrock.dart' }) {
+  Logger(String moduleName, [ String systemName = 'Bedrock.dart' ]) {
     this._moduleName = moduleName;
     this._systemName = systemName;
   }
