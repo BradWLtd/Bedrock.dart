@@ -1,8 +1,9 @@
+import 'dart:typed_data';
 import 'package:byte_array/byte_array.dart';
 
 class BinaryStream extends ByteArray {
 
-  BinaryStream([ int length = 0 ]) : super(length);
+  BinaryStream([ int length = 0 ]) : super(length, Endian.big);
 
   static from(List<int> data) {
     BinaryStream value = new BinaryStream(data.length);

@@ -5,6 +5,8 @@ import '../utils/BinaryStream.dart';
 import './raknet/Protocol.dart';
 import '../Server.dart';
 
+import 'raknet/UnconnectedPing.dart';
+
 class RakNet {
   Logger _logger = Logger('RakNet');
   Server _server;
@@ -19,7 +21,11 @@ class RakNet {
 
     switch(packetId) {
       case Protocol.UnconnectedPing:
-        this.handleUnconnectedPing()
+        this.handleUnconnectedPing(new UnconnectedPing().decode(stream), recipient);
     }
+  }
+
+  handleUnconnectedPing(UnconnectedPing packet, InternetAddress recipient) {
+    print(packet.pingId);
   }
 }

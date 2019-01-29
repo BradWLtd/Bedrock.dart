@@ -25,7 +25,7 @@ class Server {
         // String message = new String.fromCharCodes(d.data).trim();
         // this._logger.debug('Datagram from ${d.address.address}:${d.port}: ${message}');
         BinaryStream stream = BinaryStream.from(d.data);
-        print(stream.byteStream());
+        this.handleOnMessage(stream, d.address);
       });
     });
   }
