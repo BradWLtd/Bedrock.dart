@@ -1,6 +1,8 @@
 import 'dart:typed_data';
 import 'package:byte_array/byte_array.dart';
 
+import '../net/raknet/Protocol.dart';
+
 class BinaryStream extends ByteArray {
 
   BinaryStream([ int length = 0 ]) : super(length, Endian.big);
@@ -16,7 +18,7 @@ class BinaryStream extends ByteArray {
     return value;
   }
 
-  read(int len) {
+  BinaryStream read(int len) {
     BinaryStream value = new BinaryStream(len);
 
     for(int i = 0; i < len; i++) {
@@ -27,7 +29,7 @@ class BinaryStream extends ByteArray {
     return value;
   }
 
-  readUnsignedVarInt() {
+  int readUnsignedVarInt() {
     int value = 0;
 
     for(int i = 0; i <= 35; i += 7) {
@@ -42,8 +44,22 @@ class BinaryStream extends ByteArray {
     return 0;
   }
   
-  readString() {
-    return this.read(this.readUnsignedVarInt());
+  String readString() {
+    return this.read(this.readUnsignedVarInt()).toString();
+  }
+
+  void writeMagic() {
+    for(final int part in Protocol.Magic) {
+      this.writeByte(part);
+    }
+  }
+
+  void writeString(String val) {
+    List<int> bytes = val.codeUnits;
+
+    for(final int byte in bytes) {
+      this.writeByte(byte);
+    }
   }
 
 }

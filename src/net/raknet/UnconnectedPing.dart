@@ -8,7 +8,6 @@ class UnconnectedPing extends Packet {
   UnconnectedPing() : super(Protocol.UnconnectedPing);
 
   void decodeBody() {
-    print(this.getStream().offset);
     this.pingId = this.getStream().readLong();
   }
 }

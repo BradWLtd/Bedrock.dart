@@ -1,12 +1,13 @@
 import '../utils/BinaryStream.dart';
 
 abstract class Packet {
-
   int _id;
 
   BinaryStream _stream;
 
-  Packet(int id) {
+  int _streamLength;
+
+  Packet(int id, [ int this._streamLength = 256 ]) {
     this._id = id;
   }
 
@@ -36,6 +37,17 @@ abstract class Packet {
   }
 
   BinaryStream encode() {
-    this._stream = new BinaryStream();
+    this._stream = new BinaryStream(this._streamLength);
+    this.encodeHeader();
+    this.encodeBody();
+    return this.getStream();
+  }
+
+  void encodeHeader() {
+    this.getStream().writeByte(this._id);
+  }
+
+  void encodeBody() {
+
   }
 }

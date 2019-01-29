@@ -11,13 +11,13 @@ class UnconnectedPong extends Packet {
   UnconnectedPong() : super(Protocol.UnconnectedPong);
 
   void encodeBody() {
-    const name = `MCPE;${this.name};27;1.8.0;0;${this.maxPlayers};0;${this.secondaryName}`
+    String name = 'MCPE;${this.name};27;1.8.0;0;${this.maxPlayers};0;${this.secondaryName}';
 
-    return this.getStream()
-      .writeLong(this.pingId)
-      .writeLong(Protocol.SERVER_ID)
-      .writeMagic()
-      .writeShort(name.length)
-      .writeString(name)
+    this.getStream().writeLong(this.pingId);
+    this.getStream().writeLong(Protocol.ServerId);
+    this.getStream().writeMagic();
+    this.getStream().writeShort(name.length);
+    this.getStream().writeString(name);
+    this.getStream().writeBoolean(true);
   }
 }

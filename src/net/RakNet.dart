@@ -1,11 +1,11 @@
-import 'dart:io';
-
+import '../utils/Address.dart';
 import '../utils/Logger.dart';
 import '../utils/BinaryStream.dart';
 import './raknet/Protocol.dart';
 import '../Server.dart';
 
 import 'raknet/UnconnectedPing.dart';
+import 'raknet/UnconnectedPong.dart';
 
 class RakNet {
   Logger _logger = Logger('RakNet');
@@ -15,7 +15,7 @@ class RakNet {
     this._server = server;
   }
 
-  handleUnconnectedPacket(BinaryStream stream, InternetAddress recipient) {
+  handleUnconnectedPacket(BinaryStream stream, Address recipient) {
     final int packetId = stream.readByte();
     stream.offset = 0;
 
@@ -25,7 +25,12 @@ class RakNet {
     }
   }
 
-  handleUnconnectedPing(UnconnectedPing packet, InternetAddress recipient) {
-    print(packet.pingId);
+  handleUnconnectedPing(UnconnectedPing packet, Address recipient) {
+    UnconnectedPong pong = new UnconnectedPong();
+    pong.pingId = packet.pingId;
+    pong.name = 'Bedrock.dart Test Server';
+    pong.maxPlayers = 50;
+    pong.secondaryName = 'Bedrock.dart';
+    this._server.send(pong.encode(), recipient);
   }
 }
