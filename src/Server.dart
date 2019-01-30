@@ -7,13 +7,20 @@ import 'net/RakNet.dart';
 
 class Server {
 
+  static const String SYSTEM_NAME = 'Bedrock.dart';
+
   Logger _logger = Logger('Server');
 
   RakNet _rakNet;
 
   RawDatagramSocket _socket;
 
-  Server() {
+  String motd;
+  int maxPlayers;
+
+  int playerCount = 5; // Will be replaced
+
+  Server({ this.motd = 'Bedrock.dart', this.maxPlayers = 20 }) {
     this._rakNet = RakNet(this);
   }
 

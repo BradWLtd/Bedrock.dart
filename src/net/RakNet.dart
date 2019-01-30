@@ -22,14 +22,19 @@ class RakNet {
     switch(packetId) {
       case Protocol.UnconnectedPing:
         this.handleUnconnectedPing(new UnconnectedPing().decode(stream), recipient);
+        break;
+      default:
+        this._logger.error('Unconnected packet not yet implemented: ${packetId} (0x${packetId.toRadixString(16).padLeft(2, '0')})');
+        this._logger.error(this._logger.bin(stream));
     }
   }
 
   handleUnconnectedPing(UnconnectedPing packet, Address recipient) {
     UnconnectedPong pong = new UnconnectedPong();
     pong.pingId = packet.pingId;
-    pong.name = 'Bedrock.dart Test Server';
-    pong.maxPlayers = 50;
+    pong.motd = this._server.motd;
+    pong.playerCount = this._server.playerCount;
+    pong.maxPlayers = this._server.maxPlayers;
     pong.secondaryName = 'Bedrock.dart';
     this._server.send(pong.encode(), recipient);
   }

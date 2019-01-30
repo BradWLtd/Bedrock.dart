@@ -1,17 +1,19 @@
 import '../Packet.dart';
 import 'Protocol.dart';
+import '../../Server.dart';
 
 class UnconnectedPong extends Packet {
 
   int pingId;
-  String name;
+  String motd;
+  int playerCount;
   int maxPlayers;
-  String secondaryName;
+  String secondaryName = Server.SYSTEM_NAME;
 
   UnconnectedPong() : super(Protocol.UnconnectedPong);
 
   void encodeBody() {
-    String name = 'MCPE;${this.name};27;1.8.0;0;${this.maxPlayers};0;${this.secondaryName}';
+    String name = 'MCPE;${this.motd};27;1.8.0;${this.playerCount};${this.maxPlayers};0;${this.secondaryName}';
 
     this.getStream().writeLong(this.pingId);
     this.getStream().writeLong(Protocol.ServerId);
