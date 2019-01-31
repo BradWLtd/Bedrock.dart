@@ -62,4 +62,25 @@ class BinaryStream extends ByteArray {
     }
   }
 
+  void append(ByteArray arr) {
+    final bytes = new Uint8List.view(arr.buffer);
+    
+    for(final int byte in bytes) {
+      this.writeByte(byte);
+    }
+  }
+
+  int readLTriad() {
+    this.endian = Endian.little;
+    int val = this.readUnsignedInt();
+    this.endian = Endian.big;
+    return val;
+  }
+
+  void writeLTriad(int val) {
+    this.endian = Endian.little;
+    this.writeUnsignedInt(val);
+    this.endian = Endian.big;
+  }
+
 }

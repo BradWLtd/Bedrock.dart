@@ -19,8 +19,12 @@ abstract class Packet {
     return this._stream;
   }
 
-  Packet decode(BinaryStream stream) {
+  void setStream(BinaryStream stream) {
     this._stream = stream;
+  }
+
+  Packet decode(BinaryStream stream) {
+    this.setStream(stream);
 
     this.decodeHeader();
     this.decodeBody();
@@ -37,7 +41,7 @@ abstract class Packet {
   }
 
   BinaryStream encode() {
-    this._stream = new BinaryStream(this._streamLength);
+    this.setStream(new BinaryStream(this._streamLength));
     this.encodeHeader();
     this.encodeBody();
     int offset = this.getStream().offset;
@@ -46,7 +50,7 @@ abstract class Packet {
   }
 
   void encodeHeader() {
-    this.getStream().writeByte(this._id);
+    this.getStream().writeByte(this.getId());
   }
 
   void encodeBody() {

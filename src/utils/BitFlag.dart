@@ -5,4 +5,6 @@ class BitFlag {
   static const int NAK = 0x20;
   static const int ACK = 0x40;
   static const int Valid = 0x80;
+  
+  static const int HasSplit = 0x10;
 }
