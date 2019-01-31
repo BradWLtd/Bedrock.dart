@@ -4,6 +4,9 @@ import '../utils/BinaryStream.dart';
 import './raknet/Protocol.dart';
 import '../Server.dart';
 
+import 'raknet/IncompatibleProtocol.dart';
+import 'raknet/OpenConnectionRequestOne.dart';
+import 'raknet/OpenConnectionReplyOne.dart';
 import 'raknet/UnconnectedPing.dart';
 import 'raknet/UnconnectedPong.dart';
 
@@ -23,6 +26,9 @@ class RakNet {
       case Protocol.UnconnectedPing:
         this.handleUnconnectedPing(new UnconnectedPing().decode(stream), recipient);
         break;
+      case Protocol.OpenConnectionRequestOne:
+        this.handleOpenConnectionRequestOne(new OpenConnectionRequestOne().decode(stream), recipient);
+        break;
       default:
         this._logger.error('Unconnected packet not yet implemented: ${packetId} (0x${packetId.toRadixString(16).padLeft(2, '0')})');
         this._logger.error(this._logger.bin(stream));
@@ -35,7 +41,23 @@ class RakNet {
     pong.motd = this._server.motd;
     pong.playerCount = this._server.playerCount;
     pong.maxPlayers = this._server.maxPlayers;
-    pong.secondaryName = 'Bedrock.dart';
+    pong.secondaryName = Server.SYSTEM_NAME;
     this._server.send(pong.encode(), recipient);
+  }
+
+  handleOpenConnectionRequestOne(OpenConnectionRequestOne packet, Address recipient) {
+    if(packet.protocol != Protocol.ProtocolVersion) {
+      print('uh oh');
+      print(packet.protocol);
+      print(Protocol.ProtocolVersion);
+      this._server.send(new IncompatibleProtocol().encode(), recipient);
+    } else {
+      OpenConnectionReplyOne pk = new OpenConnectionReplyOne();
+      pk.mtuSize = packet.mtuSize;
+
+      print(packet.mtuSize);
+
+      this._server.send(pk.encode(), recipient);
+    }
   }
 }
