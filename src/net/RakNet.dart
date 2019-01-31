@@ -47,16 +47,10 @@ class RakNet {
 
   handleOpenConnectionRequestOne(OpenConnectionRequestOne packet, Address recipient) {
     if(packet.protocol != Protocol.ProtocolVersion) {
-      print('uh oh');
-      print(packet.protocol);
-      print(Protocol.ProtocolVersion);
-      this._server.send(new IncompatibleProtocol().encode(), recipient);
+      this._server.send((new IncompatibleProtocol()).encode(), recipient);
     } else {
       OpenConnectionReplyOne pk = new OpenConnectionReplyOne();
       pk.mtuSize = packet.mtuSize;
-
-      print(packet.mtuSize);
-
       this._server.send(pk.encode(), recipient);
     }
   }

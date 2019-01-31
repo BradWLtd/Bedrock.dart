@@ -5,10 +5,12 @@ class IncompatibleProtocol extends Packet {
 
   IncompatibleProtocol() : super(Protocol.IncompatibleProtocol);
 
-  void encodebody() {
+  void encodeBody() {
     this.getStream().writeByte(Protocol.ProtocolVersion);
     this.getStream().writeMagic();
     this.getStream().writeLong(Protocol.ServerId);
+    print(this.getStream().length);
+    print(this.getStream().offset);
   }
 
 }

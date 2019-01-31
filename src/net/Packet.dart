@@ -40,7 +40,9 @@ abstract class Packet {
     this._stream = new BinaryStream(this._streamLength);
     this.encodeHeader();
     this.encodeBody();
-    return this.getStream();
+    int offset = this.getStream().offset;
+    this.getStream().offset = 0;
+    return this.getStream().read(offset);
   }
 
   void encodeHeader() {
