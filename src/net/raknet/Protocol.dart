@@ -9,6 +9,8 @@ class Protocol {
 
   static const int OpenConnectionRequestOne = 0x05; // 5
   static const int OpenConnectionReplyOne = 0x06; // 6
+  static const int OpenConnectionRequestTwo = 0x07; // 7
+  static const int OpenConnectionReplyTwo = 0x08; // 8
 
   static const int ConnectionRequest = 0x09; // 9
 

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'utils/Address.dart';
 import 'utils/BinaryStream.dart';
 import 'utils/Logger.dart';
+import 'net/Packet.dart';
 import 'net/RakNet.dart';
 
 class Server {
@@ -50,7 +51,7 @@ class Server {
     this._rakNet.handleUnconnectedPacket(stream, recipient);
   }
 
-  send(BinaryStream stream, Address address) {
-    this._socket.send(stream.buffer.asInt8List(), new InternetAddress(address.ip), address.port);
+  send(Packet packet, Address address) {
+    this._socket.send(packet.encode().buffer.asInt8List(), new InternetAddress(address.ip), address.port);
   }
 }
