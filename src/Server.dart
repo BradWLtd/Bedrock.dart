@@ -48,7 +48,7 @@ class Server {
     final int packetId = stream.readByte();
     stream.offset = 0;
 
-    this._rakNet.handleUnconnectedPacket(stream, recipient);
+    this._rakNet.handlePacket(stream, recipient);
   }
 
   send(Packet packet, Address address) {

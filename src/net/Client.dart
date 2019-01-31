@@ -19,7 +19,7 @@ class Client {
   }
 
   _tick(Timer timer) {
-    print('client tick');
+    //
   }
 
 }

@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import '../utils/Address.dart';
+import '../utils/BitFlag.dart';
 import 'Client.dart';
 import '../utils/Logger.dart';
 import '../utils/BinaryStream.dart';
@@ -19,32 +20,54 @@ class RakNet {
   Logger _logger = Logger('RakNet');
   Server _server;
 
-  Map<Address, Client> clients = {};
+  Set<Client> clients = new Set();
 
   RakNet(Server server) {
     this._server = server;
   }
 
-  hasClient(Address address) {
-    for(final Address addr in this.clients.keys) {
-      if(addr.ip == address.ip && addr.port == address.port) return true;
+  Client getClient(Address address) {
+    for(final Client client in this.clients) {
+      if(client.address == address) return client;
     }
 
-    return false;
+    return null;
   }
 
-  handleUnconnectedPacket(BinaryStream stream, Address recipient) {
+  handlePacket(BinaryStream stream, Address recipient) {
+    final int packetId = new Uint8List.view(stream.buffer)[0];
+
+    Client client = this.getClient(recipient);
+    if(client != null) {
+      if((packetId & BitFlag.Valid) == 0) {
+        this._logger.debug('Ignored invalid packet: ${packetId}');
+        return;
+      }
+
+      if(packetId & BitFlag.ACK == 1) {
+        this._logger.debug('Got ACK');
+      } else if(packetId & BitFlag.NAK == 1) {
+        this._logger.debug('Got NAK');
+      } else {
+        this._logger.debug('Got Datagram');
+      }
+    } else {
+      this._handleUnconnectedPacket(stream, recipient);
+    }
+  }
+
+  _handleUnconnectedPacket(BinaryStream stream, Address recipient) {
     final int packetId = new Uint8List.view(stream.buffer)[0];
 
     switch(packetId) {
       case Protocol.UnconnectedPing:
-        this.handleUnconnectedPing(new UnconnectedPing().decode(stream), recipient);
+        this._handleUnconnectedPing(new UnconnectedPing().decode(stream), recipient);
         break;
       case Protocol.OpenConnectionRequestOne:
-        this.handleOpenConnectionRequestOne(new OpenConnectionRequestOne().decode(stream), recipient);
+        this._handleOpenConnectionRequestOne(new OpenConnectionRequestOne().decode(stream), recipient);
         break;
       case Protocol.OpenConnectionRequestTwo:
-        this.handleOpenConnectionRequestTwo(new OpenConnectionRequestTwo().decode(stream), recipient);
+        this._handleOpenConnectionRequestTwo(new OpenConnectionRequestTwo().decode(stream), recipient);
         break;
       default:
         this._logger.error('Unconnected packet not yet implemented: ${packetId} (0x${packetId.toRadixString(16).padLeft(2, '0')})');
@@ -52,7 +75,7 @@ class RakNet {
     }
   }
 
-  handleUnconnectedPing(UnconnectedPing packet, Address recipient) {
+  _handleUnconnectedPing(UnconnectedPing packet, Address recipient) {
     UnconnectedPong pong = new UnconnectedPong();
     pong.pingId = packet.pingId;
     pong.motd = this._server.motd;
@@ -62,7 +85,7 @@ class RakNet {
     this._server.send(pong, recipient);
   }
 
-  handleOpenConnectionRequestOne(OpenConnectionRequestOne packet, Address recipient) {
+  _handleOpenConnectionRequestOne(OpenConnectionRequestOne packet, Address recipient) {
     if(packet.protocol != Protocol.ProtocolVersion) {
       this._server.send(new IncompatibleProtocol(), recipient);
     } else {
@@ -72,13 +95,13 @@ class RakNet {
     }
   }
 
-  handleOpenConnectionRequestTwo(OpenConnectionRequestTwo packet, Address recipient) {
+  _handleOpenConnectionRequestTwo(OpenConnectionRequestTwo packet, Address recipient) {
     print(packet.port);
     print(packet.mtuSize);
     print(packet.clientId);
-    if(!this.hasClient(recipient)) {
+    if(this.getClient(recipient) == null) {
       Client client = new Client(recipient, packet.mtuSize, this._server);
-      this.clients[recipient] = client;
+      this.clients.add(client);
 
       this._logger.debug('Created client for ${client.address.ip}:${client.address.port}');
 

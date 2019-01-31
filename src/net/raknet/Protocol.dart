@@ -17,4 +17,4 @@ class Protocol {
   static const int IncompatibleProtocol = 0x19; // 25
 
   static const int UnconnectedPong = 0x1c; // 28
-} 
+}
