@@ -1,7 +1,7 @@
-import '../Packet.dart';
+import 'EncapsulatedPacket.dart';
 import 'Protocol.dart';
 
-class ConnectionRequest extends Packet {
+class ConnectionRequest extends EncapsulatedPacket {
 
   int clientId;
   int sendPingTime;

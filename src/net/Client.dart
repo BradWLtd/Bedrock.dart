@@ -4,6 +4,7 @@ import '../utils/Address.dart';
 import 'raknet/Datagram.dart';
 import 'raknet/EncapsulatedPacket.dart';
 import '../utils/Logger.dart';
+import 'raknet/Protocol.dart';
 import '../Server.dart';
 
 class Client {
@@ -43,7 +44,15 @@ class Client {
 
   handleEncapsulatedPacket(EncapsulatedPacket packet) {
     final int packetId = packet.getId();
-    this._logger.info('Got EncapsulatedPacket: ${packetId} (${this._logger.byte(packetId)})');
+
+    switch(packetId) {
+      case Protocol.DisconnectionNotification:
+        
+        break;
+      default:
+        this._logger.info('Got EncapsulatedPacket: ${packetId} (${this._logger.byte(packetId)})');
+        this._logger.info(this._logger.bin(packet.getStream()));
+    }
   }
 
 }

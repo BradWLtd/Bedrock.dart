@@ -87,7 +87,7 @@ class EncapsulatedPacket extends Packet {
 
     this.setId(stream.readByte());
 
-    this.setStream(stream);
+    this.setStream(stream.slice(this.length - stream.offset, stream.offset - 1));
     stream.offset += (this.length - 1);
 
     return this;

@@ -49,25 +49,15 @@ class BinaryStream extends ByteArray {
   }
 
   void writeMagic() {
-    for(final int part in Protocol.Magic) {
-      this.writeByte(part);
-    }
+    this.writeBytesList(Protocol.Magic);
   }
 
   void writeString(String val) {
-    List<int> bytes = val.codeUnits;
-
-    for(final int byte in bytes) {
-      this.writeByte(byte);
-    }
+    this.writeBytesList(val.codeUnits);
   }
 
-  void append(ByteArray arr) {
-    final bytes = new Uint8List.view(arr.buffer);
-    
-    for(final int byte in bytes) {
-      this.writeByte(byte);
-    }
+  void append(ByteArray arr) {    
+    this.writeBytesList(new Uint8List.view(arr.buffer));
   }
 
   int readLTriad() {
@@ -85,6 +75,22 @@ class BinaryStream extends ByteArray {
 
   bool feof() {
     return this.offset >= this.length;
+  }
+
+  void writeBytesList(List<int> bytes) {
+    for(final int byte in bytes) {
+      this.writeByte(byte);
+    }
+  }
+
+  BinaryStream slice(int length, [ int offset ]) {
+    print([ length, offset ?? this.offset ]);
+    final bytes = new Uint8List.view(this.buffer, offset ?? this.offset, length);
+    print(bytes.length);
+    BinaryStream stream = new BinaryStream(length);
+    stream.writeBytesList(bytes);
+
+    return stream;
   }
 
 }
