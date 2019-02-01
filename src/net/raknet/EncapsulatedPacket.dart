@@ -1,10 +1,11 @@
 import '../../utils/BinaryStream.dart';
 import '../../utils/BitFlag.dart';
+import '../../utils/Logger.dart';
 import '../Packet.dart';
 import 'Protocol.dart';
 import '../Reliability.dart';
 
-abstract class EncapsulatedPacket extends Packet {
+class EncapsulatedPacket extends Packet {
 
   int flags = Protocol.DataPacketFour;
 
@@ -24,11 +25,7 @@ abstract class EncapsulatedPacket extends Packet {
 
   bool needsACK = false;
 
-  EncapsulatedPacket(int id) : super(id);
-
-  int getId() {
-    return this.flags;
-  }
+  EncapsulatedPacket() : super(0);
 
   BinaryStream encode() {
     BinaryStream stream = new BinaryStream(1024);
@@ -65,9 +62,9 @@ abstract class EncapsulatedPacket extends Packet {
     this.flags = stream.readByte();
 
     this.reliability = ((this.flags & 0xe0) >> 5);
-    this.hasSplit = (flags & BitFlag.HasSplit) > 0;
+    this.hasSplit = (this.flags & BitFlag.HasSplit) > 0;
 
-    this.length = stream.readShort().ceil();
+    this.length = (stream.readShort() / 8).ceil();
 
     if(this.isReliable()) {
       this.messageIndex = stream.readLTriad();
@@ -88,7 +85,12 @@ abstract class EncapsulatedPacket extends Packet {
       this.splitIndex = stream.readInt();
     }
 
-    return super.decode(stream);
+    this.setId(stream.readByte());
+
+    this.setStream(stream);
+    stream.offset += (this.length - 1);
+
+    return this;
   }
 
   bool isReliable() {

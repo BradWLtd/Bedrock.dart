@@ -9,8 +9,6 @@ class IncompatibleProtocol extends Packet {
     this.getStream().writeByte(Protocol.ProtocolVersion);
     this.getStream().writeMagic();
     this.getStream().writeLong(Protocol.ServerId);
-    print(this.getStream().length);
-    print(this.getStream().offset);
   }
 
 }

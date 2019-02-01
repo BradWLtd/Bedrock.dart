@@ -71,16 +71,20 @@ class BinaryStream extends ByteArray {
   }
 
   int readLTriad() {
-    this.endian = Endian.little;
-    int val = this.readUnsignedInt();
-    this.endian = Endian.big;
-    return val;
+    final bytes = new Uint8List.view(this.buffer, this.offset, 3);
+    this.offset += 3;
+
+    return (bytes[0] << 16) | (bytes[1] << 8) | bytes[2];
   }
 
   void writeLTriad(int val) {
-    this.endian = Endian.little;
-    this.writeUnsignedInt(val);
-    this.endian = Endian.big;
+    this.writeByte(val & 0xff);
+    this.writeByte((val >> 8) & 0xff);
+    this.writeByte((val >> 16) & 0xff);
+  }
+
+  bool feof() {
+    return this.offset >= this.length;
   }
 
 }

@@ -13,9 +13,13 @@ class Logger {
     this._systemName = systemName;
   }
 
+  String byte(int byte) {
+    return '0x${byte.toRadixString(16).padLeft(2, '0')}';
+  }
+
   String bin(BinaryStream stream) {
     final bytes = new Uint8List.view(stream.buffer);
-    final hexBytes = bytes.map((byte) => '0x${byte.toRadixString(16).padLeft(2, '0')}');
+    final hexBytes = bytes.map(this.byte);
 
     return '[ ${hexBytes.join(', ')} ]';
   }

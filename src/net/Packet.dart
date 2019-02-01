@@ -15,6 +15,10 @@ abstract class Packet {
     return this._id;
   }
 
+  void setId(int val) {
+    this._id = val;
+  }
+
   BinaryStream getStream() {
     return this._stream;
   }

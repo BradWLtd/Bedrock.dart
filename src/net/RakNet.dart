@@ -3,9 +3,10 @@ import 'dart:typed_data';
 import '../utils/Address.dart';
 import '../utils/BitFlag.dart';
 import 'Client.dart';
+import 'raknet/Datagram.dart';
 import '../utils/Logger.dart';
 import '../utils/BinaryStream.dart';
-import './raknet/Protocol.dart';
+import 'raknet/Protocol.dart';
 import '../Server.dart';
 
 import 'raknet/IncompatibleProtocol.dart';
@@ -50,6 +51,9 @@ class RakNet {
         this._logger.debug('Got NAK');
       } else {
         this._logger.debug('Got Datagram');
+        Datagram datagram = new Datagram().decode(stream);
+
+        client.handlePackets(datagram);
       }
     } else {
       this._handleUnconnectedPacket(stream, recipient);
@@ -96,9 +100,6 @@ class RakNet {
   }
 
   _handleOpenConnectionRequestTwo(OpenConnectionRequestTwo packet, Address recipient) {
-    print(packet.port);
-    print(packet.mtuSize);
-    print(packet.clientId);
     if(this.getClient(recipient) == null) {
       Client client = new Client(recipient, packet.mtuSize, this._server);
       this.clients.add(client);
