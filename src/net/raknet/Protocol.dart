@@ -1,6 +1,7 @@
 class Protocol {
   static const int ServerId = 925686942;
   static const int ProtocolVersion = 9;
+  static const int SystemAddresses = 10;
   static const String BedrockVersion = '1.8.1';
 
   static const List<int> Magic = [0x00, 0xff, 0xff, 0x00, 0xfe, 0xfe, 0xfe, 0xfe, 0xfd, 0xfd, 0xfd, 0xfd, 0x12, 0x34, 0x56, 0x78];
@@ -13,6 +14,9 @@ class Protocol {
   static const int OpenConnectionReplyTwo = 0x08; // 8
 
   static const int ConnectionRequest = 0x09; // 9
+  static const int ConnectionRequestAccepted = 0x10; // 16
+
+  static const int NewIncomingConnection = 0x13; // 19
 
   static const int DisconnectionNotification = 0x15; // 21
 

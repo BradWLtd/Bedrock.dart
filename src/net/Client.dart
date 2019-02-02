@@ -2,10 +2,13 @@ import 'dart:async';
 
 import '../utils/Address.dart';
 import 'raknet/ConnectionRequest.dart';
+import 'raknet/ConnectionRequestAccepted.dart';
+import 'raknet/NewIncomingConnection.dart';
 import 'raknet/Datagram.dart';
 import 'raknet/EncapsulatedPacket.dart';
 import '../utils/Logger.dart';
 import 'raknet/Protocol.dart';
+import 'Reliability.dart';
 import 'RakNet.dart';
 
 class Client {
@@ -29,20 +32,20 @@ class Client {
     this._tickInterval = new Timer.periodic(tickDuration, this._tick);
   }
 
-  disconnect([ String reason = 'Client disconnection' ]) {
+  void disconnect([ String reason = 'Client disconnection' ]) {
     this._raknet.removeClient(this);
     this._tickInterval.cancel();
   }
 
-  _tick(Timer timer) {
+  void _tick(Timer timer) {
     //
   }
 
-  _registerTransaction() {
+  void _registerTransaction() {
     this._lastTransaction = DateTime.now();
   }
 
-  handlePackets(Datagram datagram) {
+  void handlePackets(Datagram datagram) {
     this._registerTransaction();
 
     for(final EncapsulatedPacket packet in datagram.packets) {
@@ -50,7 +53,7 @@ class Client {
     }
   }
 
-  _handleEncapsulatedPacket(EncapsulatedPacket packet) {
+  void _handleEncapsulatedPacket(EncapsulatedPacket packet) {
     final int packetId = packet.getId();
 
     switch(packetId) {
@@ -66,10 +69,17 @@ class Client {
     }
   }
 
-  _handleConnectionRequest(ConnectionRequest packet) {
+  void _handleConnectionRequest(ConnectionRequest packet) {
     this.clientId = packet.clientId;
 
     print(this.clientId);
+
+    var reply = new ConnectionRequestAccepted();
+    reply.address = this.address;
+    reply.systemAddresses.add(new Address('127.0.0.1', 0, AddressFamily.V4));
+    reply.pingTime = packet.sendPingTime;
+    reply.reliability = Reliability.Unreliable;
+    reply.orderChannel = 0;
   }
 
 }

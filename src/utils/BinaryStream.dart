@@ -78,6 +78,37 @@ class BinaryStream extends ByteArray {
     return this.offset >= this.length;
   }
 
+  Address readAddress() {
+    Address addr = new Address('', 0, AddressFamily.V4);
+    
+    int family = this.readByte();
+    switch(family) {
+      case 4:
+        List<int> ipParts = [];
+        for(int i = 0; i < 4; i++) {
+          ipParts.add(~this.readByte() & 0xff);
+        }
+        addr.ip = ipParts.join('.');
+        addr.port = this.readShort();
+        break;
+      default:
+        throw new Exception('Unsupported address family: ${family}');
+    }
+    return addr;
+  }
+
+  void writeAddress(Address address) {
+    switch(address.family) {
+      case AddressFamily.V4:
+        this.writeByte(4);
+        address.ip.split('.').forEach((b) => this.writeByte(~int.parse(b) & 0xff));
+        this.writeShort(address.port);
+        break;
+      default:
+        throw new Exception('Unsupported address family: ${address.family}');
+    }
+  }
+
   void writeBytesList(List<int> bytes) {
     for(final int byte in bytes) {
       this.writeByte(byte);
