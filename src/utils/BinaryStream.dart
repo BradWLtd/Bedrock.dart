@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'package:byte_array/byte_array.dart';
 
+import 'Address.dart';
 import '../net/raknet/Protocol.dart';
 
 class BinaryStream extends ByteArray {

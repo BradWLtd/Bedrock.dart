@@ -35,6 +35,11 @@ class RakNet {
     return null;
   }
 
+  void removeClient(Client client) {
+    this.clients.remove(client);
+    this._logger.info('Client disconnected: ${client.address.ip}:${client.address.port}');
+  }
+
   handlePacket(BinaryStream stream, Address recipient) {
     final int packetId = new Uint8List.view(stream.buffer)[0];
 
@@ -101,7 +106,7 @@ class RakNet {
 
   _handleOpenConnectionRequestTwo(OpenConnectionRequestTwo packet, Address recipient) {
     if(this.getClient(recipient) == null) {
-      Client client = new Client(recipient, packet.mtuSize, this._server);
+      Client client = new Client(recipient, packet.mtuSize, this);
       this.clients.add(client);
 
       this._logger.debug('Created client for ${client.address.ip}:${client.address.port}');

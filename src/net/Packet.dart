@@ -23,8 +23,10 @@ abstract class Packet {
     return this._stream;
   }
 
-  void setStream(BinaryStream stream) {
+  Packet setStream(BinaryStream stream) {
     this._stream = stream;
+
+    return this;
   }
 
   Packet decode(BinaryStream stream) {

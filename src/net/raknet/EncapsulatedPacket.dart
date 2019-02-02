@@ -25,7 +25,7 @@ class EncapsulatedPacket extends Packet {
 
   bool needsACK = false;
 
-  EncapsulatedPacket() : super(0);
+  EncapsulatedPacket([ int id = 0 ]) : super(id);
 
   BinaryStream encode() {
     BinaryStream stream = new BinaryStream(1024);
@@ -58,39 +58,41 @@ class EncapsulatedPacket extends Packet {
     return stream;
   }
 
-  EncapsulatedPacket decode(BinaryStream stream) {
-    this.flags = stream.readByte();
+  static EncapsulatedPacket from(BinaryStream stream) {
+    EncapsulatedPacket packet = new EncapsulatedPacket();
+    packet.flags = stream.readByte();
 
-    this.reliability = ((this.flags & 0xe0) >> 5);
-    this.hasSplit = (this.flags & BitFlag.HasSplit) > 0;
+    packet.reliability = ((packet.flags & 0xe0) >> 5);
+    packet.hasSplit = (packet.flags & BitFlag.HasSplit) > 0;
 
-    this.length = (stream.readShort() / 8).ceil();
+    packet.length = (stream.readShort() / 8).ceil();
 
-    if(this.isReliable()) {
-      this.messageIndex = stream.readLTriad();
+    if(packet.isReliable()) {
+      packet.messageIndex = stream.readLTriad();
     }
 
-    if(this.isSequenced()) {
-      this.sequenceIndex = stream.readLTriad();
+    if(packet.isSequenced()) {
+      packet.sequenceIndex = stream.readLTriad();
     }
 
-    if(this.isSequencedOrOrdered()) {
-      this.orderIndex = stream.readLTriad();
-      this.orderChannel = stream.readByte();
+    if(packet.isSequencedOrOrdered()) {
+      packet.orderIndex = stream.readLTriad();
+      packet.orderChannel = stream.readByte();
     }
 
-    if(this.hasSplit) {
-      this.splitCount = stream.readInt();
-      this.splitId = stream.readShort();
-      this.splitIndex = stream.readInt();
+    if(packet.hasSplit) {
+      packet.splitCount = stream.readInt();
+      packet.splitId = stream.readShort();
+      packet.splitIndex = stream.readInt();
     }
 
-    this.setId(stream.readByte());
+    packet.setId(stream.readByte());
 
-    this.setStream(stream.slice(this.length - stream.offset, stream.offset - 1));
-    stream.offset += (this.length - 1);
+    packet.setStream(stream.slice(packet.length, stream.offset - 1));
+    packet.getStream().offset = 0;
+    stream.offset += (packet.length - 1);
 
-    return this;
+    return packet;
   }
 
   bool isReliable() {

@@ -40,7 +40,7 @@ class Datagram extends Packet {
     this.sequenceNumber = stream.readLTriad();
 
     while(!stream.feof()) {
-      EncapsulatedPacket packet = new EncapsulatedPacket().decode(stream);
+      EncapsulatedPacket packet = EncapsulatedPacket.from(stream);
 
       this.packets.add(packet);
     }
