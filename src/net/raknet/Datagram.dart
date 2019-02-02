@@ -42,10 +42,25 @@ class Datagram extends Packet {
     while(!stream.feof()) {
       EncapsulatedPacket packet = EncapsulatedPacket.from(stream);
 
+      if(packet.getStream().length < 1) break;
+
       this.packets.add(packet);
     }
 
     return this;
+  }
+
+  void reset() {
+    this.packets = [];
+    this.setStream(new BinaryStream());
+  }
+
+  int get byteLength {
+    int length = 0;
+    for(final EncapsulatedPacket pk in this.packets) {
+      length += pk.getStream().length;
+    }
+    return length;
   }
 
 }

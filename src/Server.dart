@@ -19,6 +19,7 @@ class Server {
   String motd;
   int maxPlayers;
 
+  int _startTime ;
   int playerCount = 5; // Will be replaced
 
   Server({ this.motd = 'Bedrock.dart', this.maxPlayers = 20 }) {
@@ -29,6 +30,7 @@ class Server {
     RawDatagramSocket.bind(InternetAddress.anyIPv4, port).then((RawDatagramSocket socket) {
       this._logger.info('Listening on ${socket.address.address}:${socket.port}');
 
+      this._startTime = DateTime.now().millisecondsSinceEpoch.floor();
       this._socket = socket;
 
       socket.listen((RawSocketEvent e) {
@@ -49,6 +51,10 @@ class Server {
     stream.offset = 0;
 
     this._rakNet.handlePacket(stream, recipient);
+  }
+
+  int getTime() {
+    return DateTime.now().millisecondsSinceEpoch.floor() - this._startTime;
   }
 
   send(Packet packet, Address address) {

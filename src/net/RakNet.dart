@@ -106,7 +106,7 @@ class RakNet {
 
   _handleOpenConnectionRequestTwo(OpenConnectionRequestTwo packet, Address recipient) {
     if(this.getClient(recipient) == null) {
-      Client client = new Client(recipient, packet.mtuSize, this);
+      Client client = new Client(recipient, packet.mtuSize, this._server, this);
       this.clients.add(client);
 
       this._logger.debug('Created client for ${client.address.ip}:${client.address.port}');

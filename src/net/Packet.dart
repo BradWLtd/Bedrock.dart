@@ -7,7 +7,7 @@ abstract class Packet {
 
   int _streamLength;
 
-  Packet(int id, [ int this._streamLength = 256 ]) {
+  Packet(int id, [ int this._streamLength = 10240 ]) {
     this._id = id;
   }
 

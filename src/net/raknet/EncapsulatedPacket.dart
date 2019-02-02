@@ -86,11 +86,15 @@ class EncapsulatedPacket extends Packet {
       packet.splitIndex = stream.readInt();
     }
 
-    packet.setId(stream.readByte());
-
-    packet.setStream(stream.slice(packet.length, stream.offset - 1));
+    packet.setStream(stream.slice(packet.length, stream.offset));
     packet.getStream().offset = 0;
-    stream.offset += (packet.length - 1);
+
+    if(packet.getStream().length > 0) {
+      packet.setId(packet.getStream().readByte());
+      packet.getStream().offset = 0;
+    }
+    
+    stream.offset += packet.length;
 
     return packet;
   }

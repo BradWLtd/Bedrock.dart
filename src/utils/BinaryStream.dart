@@ -74,6 +74,10 @@ class BinaryStream extends ByteArray {
     this.writeByte((val >> 16) & 0xff);
   }
 
+  int get writtenLength {
+    return this.offset;
+  }
+
   bool feof() {
     return this.offset >= this.length;
   }
