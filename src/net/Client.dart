@@ -7,6 +7,7 @@ import 'raknet/ConnectedPing.dart';
 import 'raknet/ConnectedPong.dart';
 import 'raknet/Datagram.dart';
 import 'raknet/EncapsulatedPacket.dart';
+import 'raknet/NewIncomingConnection.dart';
 import '../utils/Logger.dart';
 import 'raknet/Protocol.dart';
 import 'Reliability.dart';
@@ -136,6 +137,9 @@ class Client {
       case Protocol.ConnectionRequest:
         this._handleConnectionRequest(ConnectionRequest().decode(packet.getStream()));
         break;
+      case Protocol.NewIncomingConnection:
+      this._handleClientHandshake(NewIncomingConnection().decode(packet.getStream()));
+      break;
       case Protocol.ConnectedPing:
         this._handleConnectedPing(ConnectedPing().decode(packet.getStream()));
         break;
@@ -167,4 +171,9 @@ class Client {
     this._queueEncapsulatedPacket(reply);
   }
 
+  void _handleClientHandshake(NewIncomingConnection packet) {
+  // TODO: Add state and set it to connected here
+  // this.sendPing()
+  }
+  
 }
