@@ -67,6 +67,12 @@ class EncapsulatedPacket extends Packet {
 
     packet.length = (stream.readShort() / 8).ceil();
 
+    if(packet.length < 0) {
+      print('ERR: Packet Length less than zero');
+      packet.setStream(BinaryStream());
+      return packet;
+    }
+
     if(packet.isReliable()) {
       packet.messageIndex = stream.readLTriad();
     }
