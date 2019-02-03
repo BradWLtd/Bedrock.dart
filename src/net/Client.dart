@@ -145,11 +145,14 @@ class Client {
       case Protocol.ConnectionRequest:
         this._handleConnectionRequest(ConnectionRequest().decode(packet.getStream()));
         break;
+      case Protocol.NewIncomingConnection:
+        this._handleNewIncomingConnection(NewIncomingConnection().decode(packet.getStream()));
+        break;
       case Protocol.ConnectedPing:
         this._handleConnectedPing(ConnectedPing().decode(packet.getStream()));
         break;
-      case Protocol.NewIncomingConnection:
-        this._handleNewIncomingConnection(NewIncomingConnection().decode(packet.getStream()));
+      case Protocol.ConnectedPong:
+        this._handleConnectedPong(ConnectedPong().decode(packet.getStream()));
         break;
       default:
         this._logger.error('Got unknown EncapsulatedPacket: ${packetId} (${this._logger.byte(packetId)})');
@@ -170,6 +173,11 @@ class Client {
     this._queueEncapsulatedPacket(reply);
   }
 
+  void _handleNewIncomingConnection(NewIncomingConnection packet) {
+    // TODO: Add state and set it to connected here
+    this._sendPing();
+  }
+
   void _handleConnectedPing(ConnectedPing packet) {
     ConnectedPong reply = new ConnectedPong();
     reply.sendPingTime = packet.sendPingTime;
@@ -179,9 +187,8 @@ class Client {
     this._queueEncapsulatedPacket(reply);
   }
 
-  void _handleNewIncomingConnection(NewIncomingConnection packet) {
-    // TODO: Add state and set it to connected here
-    this._sendPing();
+  void _handleConnectedPong(ConnectedPong packet) {
+    // Cool!
   }
   
 }
