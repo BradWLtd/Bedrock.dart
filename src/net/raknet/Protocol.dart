@@ -6,7 +6,10 @@ class Protocol {
 
   static const List<int> Magic = [0x00, 0xff, 0xff, 0x00, 0xfe, 0xfe, 0xfe, 0xfe, 0xfd, 0xfd, 0xfd, 0xfd, 0x12, 0x34, 0x56, 0x78];
 
+  static const int ConnectedPing = 0x00; // 0
   static const int UnconnectedPing = 0x01; // 1
+
+  static const int ConnectedPong = 0x03; // 3
 
   static const int OpenConnectionRequestOne = 0x05; // 5
   static const int OpenConnectionReplyOne = 0x06; // 6

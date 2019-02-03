@@ -3,7 +3,8 @@ import 'dart:async';
 import '../utils/Address.dart';
 import 'raknet/ConnectionRequest.dart';
 import 'raknet/ConnectionRequestAccepted.dart';
-import 'raknet/NewIncomingConnection.dart';
+import 'raknet/ConnectedPing.dart';
+import 'raknet/ConnectedPong.dart';
 import 'raknet/Datagram.dart';
 import 'raknet/EncapsulatedPacket.dart';
 import '../utils/Logger.dart';
@@ -135,6 +136,9 @@ class Client {
       case Protocol.ConnectionRequest:
         this._handleConnectionRequest(ConnectionRequest().decode(packet.getStream()));
         break;
+      case Protocol.ConnectedPing:
+        this._handleConnectedPing(ConnectedPing().decode(packet.getStream()));
+        break;
       default:
         this._logger.error('Got unknown EncapsulatedPacket: ${packetId} (${this._logger.byte(packetId)})');
         this._logger.error(this._logger.bin(packet.getStream()));
@@ -144,12 +148,21 @@ class Client {
   void _handleConnectionRequest(ConnectionRequest packet) {
     this.clientId = packet.clientId;
 
-    var reply = new ConnectionRequestAccepted();
+    ConnectionRequestAccepted reply = new ConnectionRequestAccepted();
     reply.address = this.address;
     reply.pingTime = packet.sendPingTime;
     reply.pongTime = this._server.getTime();
     reply.reliability = Reliability.Unreliable;
     reply.orderChannel = 0;
+
+    this._queueEncapsulatedPacket(reply);
+  }
+
+  void _handleConnectedPing(ConnectedPing packet) {
+    ConnectedPong reply = new ConnectedPong();
+    reply.sendPingTime = packet.sendPingTime;
+    reply.sendPongTime = this._server.getTime();
+    reply.reliability = Reliability.Unreliable;
 
     this._queueEncapsulatedPacket(reply);
   }
