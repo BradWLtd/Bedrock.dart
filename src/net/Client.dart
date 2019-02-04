@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'raknet/ACK.dart';
 import '../utils/Address.dart';
 import 'raknet/ConnectionRequest.dart';
 import 'raknet/ConnectionRequestAccepted.dart';
@@ -7,7 +8,9 @@ import 'raknet/ConnectedPing.dart';
 import 'raknet/ConnectedPong.dart';
 import 'raknet/Datagram.dart';
 import 'raknet/EncapsulatedPacket.dart';
+import 'raknet/NAK.dart';
 import 'raknet/NewIncomingConnection.dart';
+import 'Packet.dart';
 import '../utils/Logger.dart';
 import 'raknet/Protocol.dart';
 import 'Reliability.dart';
@@ -25,7 +28,7 @@ class Client {
   RakNet _raknet;
   Server _server;
 
-  Logger _logger = new Logger('Client');
+  Logger _logger = Logger('Client');
 
   Timer _tickInterval;
 
@@ -33,14 +36,18 @@ class Client {
 
   int messageIndex = 0;
   int sequenceNumber = 0;
+  int lastSequenceNumber = 0;
   Map<int, int> orderedIndex = {};
   Map<int, int> sequencedIndex = {};
 
-  Datagram packetQueue = new Datagram();
+  ACK ackQueue = ACK();
+  NAK nakQueue = NAK();
+  Datagram packetQueue = Datagram();
+  Map<int, Datagram> recoveryQueue = {};
 
   Client(Address this.address, int this.mtuSize, Server this._server, RakNet this._raknet) {
     const tickDuration = const Duration(milliseconds: 500);
-    this._tickInterval = new Timer.periodic(tickDuration, this._tick);
+    this._tickInterval = Timer.periodic(tickDuration, this._tick);
   }
 
   void disconnect([ String reason = 'Client disconnection' ]) {
@@ -51,9 +58,15 @@ class Client {
   void _tick(Timer timer) {
     // TODO: Last update check
 
-    // TODO: ACK Queue send
+    if(this.ackQueue.ids.length > 0) {
+      this._server.send(this.ackQueue, this.address);
+      this.ackQueue.reset();
+    }
 
-    // TODO: NAK Queue send
+    if(this.nakQueue.ids.length > 0) {
+      this._server.send(this.nakQueue, this.address);
+      this.nakQueue.reset();
+    }
 
     // TODO: Datagram Queue send
 
@@ -130,8 +143,45 @@ class Client {
   void handlePackets(Datagram datagram) {
     this._registerTransaction();
 
+    int diff = datagram.sequenceNumber - this.lastSequenceNumber;
+
+    if(this.nakQueue.ids.length > 0) {
+      int index = this.nakQueue.ids.indexOf(datagram.sequenceNumber);
+      if(index != -1) this.nakQueue.ids.removeAt(index);
+
+      if(diff != 1) {
+        for(int i = this.lastSequenceNumber + 1; i < datagram.sequenceNumber; i++) {
+          this.nakQueue.ids.add(i);
+        }
+      }
+    }
+
+    this.ackQueue.ids.add(datagram.sequenceNumber);
+
+    if(diff >= 1) {
+      this.lastSequenceNumber = datagram.sequenceNumber;
+    }
+
     for(final EncapsulatedPacket packet in datagram.packets) {
       this._handleEncapsulatedPacket(packet);
+    }
+  }
+
+  void handlePacket(Packet packet) {
+    this._registerTransaction();
+
+    if(packet is EncapsulatedPacket) return this._handleEncapsulatedPacket(packet);
+
+    if(packet is ACK) {
+      this._logger.debug('GOT ACK');
+      for(final int id in packet.ids) {
+        if(this.recoveryQueue.containsKey(id)) this.recoveryQueue.remove(id);
+      }
+    }
+
+    if(packet is NAK) {
+      this._logger.debug('GOT NAK');
+
     }
   }
 
@@ -163,7 +213,7 @@ class Client {
   void _handleConnectionRequest(ConnectionRequest packet) {
     this.clientId = packet.clientId;
 
-    ConnectionRequestAccepted reply = new ConnectionRequestAccepted();
+    ConnectionRequestAccepted reply = ConnectionRequestAccepted();
     reply.address = this.address;
     reply.pingTime = packet.sendPingTime;
     reply.pongTime = this._server.getTime();
@@ -179,7 +229,7 @@ class Client {
   }
 
   void _handleConnectedPing(ConnectedPing packet) {
-    ConnectedPong reply = new ConnectedPong();
+    ConnectedPong reply = ConnectedPong();
     reply.sendPingTime = packet.sendPingTime;
     reply.sendPongTime = this._server.getTime();
     reply.reliability = Reliability.Unreliable;

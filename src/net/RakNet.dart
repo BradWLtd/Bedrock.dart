@@ -1,15 +1,18 @@
 import 'dart:typed_data';
 
 import '../utils/Address.dart';
+import '../utils/BinaryStream.dart';
 import '../utils/BitFlag.dart';
 import 'Client.dart';
-import 'raknet/Datagram.dart';
 import '../utils/Logger.dart';
-import '../utils/BinaryStream.dart';
 import 'raknet/Protocol.dart';
 import '../Server.dart';
 
+// Packets
+import 'raknet/ACK.dart';
+import 'raknet/Datagram.dart';
 import 'raknet/IncompatibleProtocol.dart';
+import 'raknet/NAK.dart';
 import 'raknet/OpenConnectionRequestOne.dart';
 import 'raknet/OpenConnectionReplyOne.dart';
 import 'raknet/OpenConnectionRequestTwo.dart';
@@ -50,12 +53,11 @@ class RakNet {
         return;
       }
 
-      if(packetId & BitFlag.ACK == 1) {
-        this._logger.debug('Got ACK');
-      } else if(packetId & BitFlag.NAK == 1) {
-        this._logger.debug('Got NAK');
+      if(packetId & BitFlag.ACK > 0) {
+        client.handlePacket(ACK().decode(stream));
+      } else if(packetId & BitFlag.NAK > 0) {
+        client.handlePacket(NAK().decode(stream));
       } else {
-        this._logger.debug('Got Datagram');
         Datagram datagram = new Datagram().decode(stream);
 
         client.handlePackets(datagram);

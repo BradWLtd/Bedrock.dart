@@ -62,10 +62,16 @@ class BinaryStream extends ByteArray {
   }
 
   int readLTriad() {
-    final bytes = new Uint8List.view(this.buffer, this.offset, 3);
-    this.offset += 3;
+    // final bytes = new Uint8List.view(this.buffer, this.offset, 3);
+    // this.offset += 3;
 
-    return (bytes[0] << 16) | (bytes[1] << 8) | bytes[2];
+    // return (bytes[0] << 16) | (bytes[1] << 8) | bytes[2];
+
+    this.endian = Endian.little;
+    int triad = (this.readByte() << 16) | (this.readByte() << 8) | this.readByte();
+    this.endian = Endian.big;
+
+    return triad;
   }
 
   void writeLTriad(int val) {
@@ -82,6 +88,13 @@ class BinaryStream extends ByteArray {
     return this.offset >= this.length;
   }
 
+  int readLShort() {
+    this.endian = Endian.little;
+    int val = this.readShort();
+    this.endian = Endian.big;
+    return val;
+  }
+
   Address readAddress() {
     Address addr = new Address('', 0, AddressFamily.V4);
     
@@ -94,6 +107,11 @@ class BinaryStream extends ByteArray {
         }
         addr.ip = ipParts.join('.');
         addr.port = this.readShort();
+        break;
+      case 6:
+        // TODO: Actually implement
+        this.read(26);
+        this.readShort();
         break;
       default:
         throw new Exception('Unsupported address family: ${family}');
@@ -120,9 +138,7 @@ class BinaryStream extends ByteArray {
   }
 
   BinaryStream slice(int length, [ int offset ]) {
-    print([ length, offset ?? this.offset ]);
     final bytes = new Uint8List.view(this.buffer, offset ?? this.offset, length);
-    print(bytes.length);
     BinaryStream stream = new BinaryStream(length);
     stream.writeBytesList(bytes);
 

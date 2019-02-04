@@ -28,4 +28,7 @@ class Protocol {
   static const int UnconnectedPong = 0x1c; // 28
 
   static const int DataPacketFour = 0x84; // 132
+
+  static const int NAK = 0xa0; // 160
+  static const int ACK = 0xc0; // 192
 }
