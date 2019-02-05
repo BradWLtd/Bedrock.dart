@@ -44,6 +44,7 @@ class Client {
   NAK nakQueue = NAK();
   Datagram packetQueue = Datagram();
   Map<int, Datagram> recoveryQueue = {};
+  List<Datagram> datagramQueue = [];
 
   Client(Address this.address, int this.mtuSize, Server this._server, RakNet this._raknet) {
     const tickDuration = const Duration(milliseconds: 500);
@@ -68,9 +69,24 @@ class Client {
       this.nakQueue.reset();
     }
 
-    // TODO: Datagram Queue send
+    if(this.datagramQueue.length > 0) {
+      final int limit = 16;
+
+      for(int i = 0; i < this.datagramQueue.length; i++) {
+        if(i > limit) break;
+
+        this._server.send(this.datagramQueue[i], this.address);
+        this.datagramQueue.removeAt(i);
+      }
+    }
 
     // TODO: Recovery Queue send
+    if(this.recoveryQueue.length > 0) {
+      this.recoveryQueue.forEach((seq, pk) {
+        this.datagramQueue.add(pk);
+        this.recoveryQueue.remove(seq);
+      });
+    }
 
     if(this.packetQueue.packets.length > 0) {
       this._sendPacketQueue();
@@ -181,7 +197,13 @@ class Client {
 
     if(packet is NAK) {
       this._logger.debug('GOT NAK');
-
+      for(final int id in packet.ids) {
+        print(id);
+        if(this.recoveryQueue.containsKey(id)) {
+          this.datagramQueue.add(this.recoveryQueue[id]);
+          this.recoveryQueue.remove(id);
+        }
+      }
     }
   }
 

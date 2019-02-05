@@ -28,7 +28,6 @@ abstract class Acknowledgement extends Packet {
         }
 
         for(int c = start; c <= end; c++) {
-          print(c);
           this.ids.add(c);
           cnt++;
         }

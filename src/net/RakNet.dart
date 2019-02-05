@@ -58,7 +58,7 @@ class RakNet {
       } else if(packetId & BitFlag.NAK > 0) {
         client.handlePacket(NAK().decode(stream));
       } else {
-        Datagram datagram = new Datagram().decode(stream);
+        Datagram datagram = Datagram().decode(stream);
 
         client.handlePackets(datagram);
       }
