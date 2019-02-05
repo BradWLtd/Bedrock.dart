@@ -13,7 +13,7 @@ class UnconnectedPong extends Packet {
   UnconnectedPong() : super(Protocol.UnconnectedPong);
 
   void encodeBody() {
-    String name = 'MCPE;${this.motd};27;1.8.0;${this.playerCount};${this.maxPlayers};0;${this.secondaryName}';
+    String name = 'MCPE;${this.motd};27;${Protocol.BedrockVersion};${this.playerCount};${this.maxPlayers};0;${this.secondaryName}';
 
     this.getStream().writeLong(this.pingId);
     this.getStream().writeLong(Protocol.ServerId);
