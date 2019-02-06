@@ -34,6 +34,16 @@ class BinaryStream {
     return BinaryStream.fromByteData(view, endian);
   }
 
+  static BinaryStream fromString(String str) {
+    List<int> chars = str.codeUnits;
+    BinaryStream stream = BinaryStream(chars.length);
+
+    stream.writeBytesList(chars);
+    stream.offset = 0;
+
+    return stream;
+  }
+
   int readSignedByte() => _getNum<int>((i, _) => _byteData.getInt8(i), 1);
   int readByte() => _getNum<int>((i, _) => _byteData.getUint8(i), 1);
 
@@ -52,8 +62,8 @@ class BinaryStream {
   double readFloat() => _getNum<double>(_byteData.getFloat32, 4);
   double readDouble() => _getNum<double>(_byteData.getFloat64, 8);
 
-  void writeByte(int value) => _setNum<int>((i, v, _) => _byteData.setInt8(i, v), value, 1);
-  void writeUnsignedByte(int value) => _setNum<int>((i, v, _) => _byteData.setUint8(i, v), value, 1);
+  void writeSigendByte(int value) => _setNum<int>((i, v, _) => _byteData.setInt8(i, v), value, 1);
+  void writeByte(int value) => _setNum<int>((i, v, _) => _byteData.setUint8(i, v), value, 1);
 
   /// Writes [int], 1 if true, zero if false
   void writeBoolean(bool value) => writeByte(value ? 1 : 0);
@@ -217,7 +227,9 @@ class BinaryStream {
   }
   
   String readString() {
-    return this.read(this.readUnsignedVarInt()).toString();
+    BinaryStream stream = this.read(this.readUnsignedVarInt());
+    List<int> chars = stream.buffer.asUint8List();
+    return String.fromCharCodes(chars);
   }
 
   void writeMagic() {

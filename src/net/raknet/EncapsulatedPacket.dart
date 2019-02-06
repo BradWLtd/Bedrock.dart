@@ -86,7 +86,7 @@ class EncapsulatedPacket extends Packet {
       packet.splitIndex = stream.readInt();
     }
 
-    packet.setStream(stream.read(packet.length));
+    packet.setStream(stream.read(packet.length)); 
 
     if(packet.getStream().length > 0) {
       packet.setId(packet.getStream().readByte());

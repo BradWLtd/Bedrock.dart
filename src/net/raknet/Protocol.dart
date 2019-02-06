@@ -31,4 +31,6 @@ class Protocol {
 
   static const int NAK = 0xa0; // 160
   static const int ACK = 0xc0; // 192
+
+  static const int GamePacketWrapper = 0xfe; // 254
 }

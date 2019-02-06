@@ -1,21 +1,30 @@
 import 'dart:async';
+import 'dart:typed_data';
+import 'package:archive/archive.dart';
+import 'package:archive/archive_io.dart';
+
+import '../utils/Address.dart';
+import 'bedrock/Protocol.dart' as Bedrock;
+import '../utils/Logger.dart';
+import 'raknet/Protocol.dart';
+import 'Reliability.dart';
+import 'RakNet.dart';
+import '../Server.dart';
 
 import 'raknet/ACK.dart';
-import '../utils/Address.dart';
+import '../utils/BinaryStream.dart';
 import 'raknet/ConnectionRequest.dart';
 import 'raknet/ConnectionRequestAccepted.dart';
 import 'raknet/ConnectedPing.dart';
 import 'raknet/ConnectedPong.dart';
 import 'raknet/Datagram.dart';
 import 'raknet/EncapsulatedPacket.dart';
+import 'raknet/GamePacketWrapper.dart';
 import 'raknet/NAK.dart';
 import 'raknet/NewIncomingConnection.dart';
 import 'Packet.dart';
-import '../utils/Logger.dart';
-import 'raknet/Protocol.dart';
-import 'Reliability.dart';
-import 'RakNet.dart';
-import '../Server.dart';
+
+import 'bedrock/Login.dart';
 
 class Client {
 
@@ -226,6 +235,9 @@ class Client {
       case Protocol.ConnectedPong:
         this._handleConnectedPong(ConnectedPong().decode(packet.getStream()));
         break;
+      case Protocol.GamePacketWrapper:
+        this._handleGamePacket(GamePacketWrapper().decode(packet.getStream()));
+        break;
       default:
         this._logger.error('Got unknown EncapsulatedPacket: ${packetId} (${this._logger.byte(packetId)})');
         this._logger.error(this._logger.bin(packet.getStream()));
@@ -261,6 +273,30 @@ class Client {
 
   void _handleConnectedPong(ConnectedPong packet) {
     // Cool!
+  }
+
+  void _handleGamePacket(GamePacketWrapper packet) {
+    BinaryStream body = packet.getStream().slice(packet.getStream().length - 1, 1);
+    List<int> payload = ZLibDecoder().decodeBytes(body.buffer.asInt8List());
+    BinaryStream pStream = BinaryStream.fromString(String.fromCharCodes(payload));
+
+    while(!pStream.feof()) {
+      BinaryStream stream = BinaryStream.fromString(pStream.readString());
+      final int packetId = new Uint8List.view(stream.buffer)[0];
+
+      switch(packetId) {
+        case Bedrock.Protocol.Login:
+          this._handleLogin(Login().decode(stream));
+          break;
+        default:
+          this._logger.error('Got unknown GamePacket: ${packetId} (${this._logger.byte(packetId)})');
+          this._logger.error(this._logger.bin(stream));
+      }
+    }
+  }
+
+  void _handleLogin(Login packet) {
+    this._logger.debug('Got login. Username: ${packet.username}');
   }
   
 }
