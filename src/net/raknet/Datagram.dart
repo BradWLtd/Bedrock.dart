@@ -39,7 +39,6 @@ class Datagram extends Packet {
     this.sequenceNumber = stream.readLTriad();
 
     while(!stream.feof()) {
-      print([ 'datagram length', stream.length, this.sequenceNumber ]);
       EncapsulatedPacket packet = EncapsulatedPacket.from(stream);
 
       if(packet.getStream().length < 1) break;

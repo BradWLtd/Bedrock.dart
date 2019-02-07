@@ -44,6 +44,15 @@ class BinaryStream {
     return stream;
   }
 
+  static BinaryStream fromBytes(List<int> bytes) {
+    BinaryStream stream = BinaryStream(bytes.length);
+
+    stream.writeBytesList(bytes);
+    stream.offset = 0;
+
+    return stream;
+  }
+
   int readSignedByte() => _getNum<int>((i, _) => _byteData.getInt8(i), 1);
   int readByte() => _getNum<int>((i, _) => _byteData.getUint8(i), 1);
 
@@ -62,20 +71,20 @@ class BinaryStream {
   double readFloat() => _getNum<double>(_byteData.getFloat32, 4);
   double readDouble() => _getNum<double>(_byteData.getFloat64, 8);
 
-  void writeSigendByte(int value) => _setNum<int>((i, v, _) => _byteData.setInt8(i, v), value, 1);
+  void writeSignedByte(int value) => _setNum<int>((i, v, _) => _byteData.setInt8(i, v), value, 1);
   void writeByte(int value) => _setNum<int>((i, v, _) => _byteData.setUint8(i, v), value, 1);
 
   /// Writes [int], 1 if true, zero if false
   void writeBoolean(bool value) => writeByte(value ? 1 : 0);
 
-  void writeShort(int value) => _setNum(_byteData.setInt16, value, 2);
-  void writeUnsignedShort(int value) => _setNum(_byteData.setUint16, value, 2);
+  void writeSignedShort(int value) => _setNum(_byteData.setInt16, value, 2);
+  void writeShort(int value) => _setNum(_byteData.setUint16, value, 2);
 
   void writeInt(int value) => _setNum(_byteData.setInt32, value, 4);
   void writeUnsignedInt(int value) => _setNum(_byteData.setUint32, value, 4);
 
-  void writeLong(int value) => _setNum(_byteData.setInt64, value, 8);
-  void writeUnsignedLong(int value) => _setNum(_byteData.setUint64, value, 8);
+  void writeSignedLong(int value) => _setNum(_byteData.setInt64, value, 8);
+  void writeLong(int value) => _setNum(_byteData.setUint64, value, 8);
 
   void writeFloat(double value) => _setNum(_byteData.setFloat32, value, 4);
   void writeDouble(double value) => _setNum(_byteData.setFloat64, value, 8);
@@ -214,7 +223,7 @@ class BinaryStream {
   int readUnsignedVarInt() {
     int value = 0;
 
-    for(int i = 0; i <= 35; i += 7) {
+    for(int i = 0; i <= 28; i += 7) {
       int b = this.readByte();
       value |= ((b & 0x7f) << i);
 
@@ -227,7 +236,9 @@ class BinaryStream {
   }
   
   String readString() {
-    BinaryStream stream = this.read(this.readUnsignedVarInt());
+    int len = this.readUnsignedVarInt();
+    print('len: ${len}');
+    BinaryStream stream = this.read(len);
     List<int> chars = stream.buffer.asUint8List();
     return String.fromCharCodes(chars);
   }
@@ -317,10 +328,15 @@ class BinaryStream {
     }
   }
 
+  Uint8List readBytes(int length, [ int offset ]) {
+    return Uint8List.view(this.buffer, offset ?? this.offset, length);
+  }
+
   BinaryStream slice(int length, [ int offset ]) {
-    final bytes = new Uint8List.view(this.buffer, offset ?? this.offset, length);
-    BinaryStream stream = new BinaryStream(length);
+    final bytes = this.readBytes(length, offset);
+    BinaryStream stream = BinaryStream(length);
     stream.writeBytesList(bytes);
+    stream.offset = 0;
 
     return stream;
   }

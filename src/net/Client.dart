@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:archive/archive.dart';
 import 'package:archive/archive_io.dart';
@@ -276,11 +277,15 @@ class Client {
   }
 
   void _handleGamePacket(GamePacketWrapper packet) {
-    BinaryStream body = packet.getStream().slice(packet.getStream().length - 1, 1);
-    List<int> payload = ZLibDecoder().decodeBytes(body.buffer.asInt8List());
-    BinaryStream pStream = BinaryStream.fromString(String.fromCharCodes(payload));
+    Uint8List bytes = packet.getStream().readBytes(packet.getStream().length - 1, 1);
+    List<int> payload = ZLibDecoder().decodeBytes(bytes);
+    BinaryStream pStream = BinaryStream.fromBytes(payload);
 
     while(!pStream.feof()) {
+      this._logger.error(packet.getStream().length);
+      this._logger.error(payload.length);
+      this._logger.error(pStream.length);
+      this._logger.error(pStream.offset);
       BinaryStream stream = BinaryStream.fromString(pStream.readString());
       final int packetId = new Uint8List.view(stream.buffer)[0];
 
