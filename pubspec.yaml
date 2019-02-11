@@ -4,3 +4,4 @@ dependencies:
   ansicolor: 1.0.2
   typed_data: 1.1.6
   archive: 2.0.8
+  corsac_jwt: 0.1.2

@@ -235,8 +235,8 @@ class BinaryStream {
     return 0;
   }
   
-  String readString() {
-    int len = this.readUnsignedVarInt();
+  String readString([ int len ]) {
+    if(len == null) len = this.readUnsignedVarInt();
     print('len: ${len}');
     BinaryStream stream = this.read(len);
     List<int> chars = stream.buffer.asUint8List();
@@ -282,6 +282,14 @@ class BinaryStream {
   int readLShort() {
     this.endian = Endian.little;
     int val = this.readShort();
+    this.endian = Endian.big;
+    return val;
+  }
+
+  
+  int readLInt() {
+    this.endian = Endian.little;
+    int val = this.readInt();
     this.endian = Endian.big;
     return val;
   }

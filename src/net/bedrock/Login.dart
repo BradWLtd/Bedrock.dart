@@ -1,3 +1,8 @@
+import 'dart:convert';
+
+import 'package:corsac_jwt/corsac_jwt.dart';
+
+import '../../utils/BinaryStream.dart';
 import 'GamePacket.dart';
 import 'Protocol.dart';
 
@@ -5,7 +10,7 @@ class Login extends GamePacket {
 
   int protocol;
 
-  Object chainData;
+  Map<String, dynamic> chainData;
   Object clientData;
 
   String username;
@@ -20,7 +25,23 @@ class Login extends GamePacket {
 
   void decodeBody() {
     this.protocol = this.getStream().readInt();
-    throw new Exception(this.protocol);
+
+    BinaryStream loginStream = BinaryStream.fromString(this.getStream().readString());
+    String chainJson = loginStream.readString(loginStream.readLInt());
+
+    this.chainData = jsonDecode(chainJson);
+    
+    this.chainData['chain'].forEach((token) {
+      Map<String, dynamic> claims = JWT.parse(token).claims;
+
+      if(claims.containsKey('extraData')) {
+        if(claims['extraData']['displayName'] != null) this.username = claims['extraData']['displayName'];
+        if(claims['extraData']['identity'] != null) this.clientUUID = claims['extraData']['identity'];
+        if(claims['extraData']['XUID'] != null) this.xuid = claims['extraData']['XUID'];
+      }
+
+      if(claims.containsKey('identityPublicKey')) this.publicKey = claims['identityPublicKey'];
+    });
   }
 
 }
