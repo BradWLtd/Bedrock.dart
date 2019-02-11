@@ -11,7 +11,7 @@ class Login extends GamePacket {
   int protocol;
 
   Map<String, dynamic> chainData;
-  Object clientData;
+  Map<String, dynamic> clientData;
 
   String username;
   String clientUUID;
@@ -42,6 +42,12 @@ class Login extends GamePacket {
 
       if(claims.containsKey('identityPublicKey')) this.publicKey = claims['identityPublicKey'];
     });
+
+    String clientToken = loginStream.readString(loginStream.readLInt());
+    this.clientData = JWT.parse(clientToken).claims;
+
+    if(this.clientData.containsKey('ClientRandomId')) this.clientId = this.clientData['ClientRandomId'];
+    if(this.clientData.containsKey('ServerAddress')) this.serverAddress = this.clientData['ServerAddress'];
   }
 
 }
