@@ -212,7 +212,6 @@ class Client {
     if(packet is NAK) {
       this._logger.debug('GOT NAK');
       for(final int id in packet.ids) {
-        print(id);
         if(this.recoveryQueue.containsKey(id)) {
           this.datagramQueue.add(this.recoveryQueue[id]);
           this.recoveryQueue.remove(id);
@@ -288,10 +287,6 @@ class Client {
     BinaryStream pStream = BinaryStream.fromBytes(payload);
 
     while(!pStream.feof()) {
-      this._logger.error(packet.getStream().length);
-      this._logger.error(payload.length);
-      this._logger.error(pStream.length);
-      this._logger.error(pStream.offset);
       BinaryStream stream = BinaryStream.fromString(pStream.readString());
       final int packetId = new Uint8List.view(stream.buffer)[0];
 

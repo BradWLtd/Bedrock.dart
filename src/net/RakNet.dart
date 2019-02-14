@@ -97,7 +97,6 @@ class RakNet {
   }
 
   _handleOpenConnectionRequestOne(OpenConnectionRequestOne packet, Address recipient) {
-    print(['protocol ver', packet.protocol]);
     if(packet.protocol != Protocol.ProtocolVersion) {
       this._server.send(new IncompatibleProtocol(), recipient);
     } else {

@@ -239,7 +239,6 @@ class BinaryStream {
   
   String readString([ int len ]) {
     if(len == null) len = this.readUnsignedVarInt();
-    print('len: ${len}');
     BinaryStream stream = this.read(len);
     List<int> chars = stream.buffer.asUint8List();
     return String.fromCharCodes(chars);
