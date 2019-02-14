@@ -387,14 +387,20 @@ class BinaryStream {
   }
 
   void writeVector3Float(Vector3 v3) {
-    this.writeFloat(v3.x);
-    this.writeFloat(v3.y);
-    this.writeFloat(v3.z);
+    this.writeLFloat(v3.x);
+    this.writeLFloat(v3.y);
+    this.writeLFloat(v3.z);
   }
 
   void writeVector3VarInt(Vector3 v3) {
     this.writeVarInt(v3.x.toInt());
     this.writeVarInt(v3.y.toInt());
+    this.writeVarInt(v3.z.toInt());
+  }
+
+  void writePosition(Vector3 v3) {
+    this.writeVarInt(v3.x.toInt());
+    this.writeUnsignedVarInt(v3.y.toInt());
     this.writeVarInt(v3.z.toInt());
   }
 
@@ -414,6 +420,24 @@ class BinaryStream {
   void writeLFloat(double v) {
     this.endian = Endian.little;
     this.writeFloat(v);
+    this.endian = Endian.big;
+  }
+
+  void writeLInt(int v) {
+    this.endian = Endian.little;
+    this.writeInt(v);
+    this.endian = Endian.big;
+  }
+
+  void writeLLong(int v) {
+    this.endian = Endian.little;
+    this.writeLong(v);
+    this.endian = Endian.big;
+  }
+
+  void writeLShort(int v) {
+    this.endian = Endian.little;
+    this.writeShort(v);
     this.endian = Endian.big;
   }
 

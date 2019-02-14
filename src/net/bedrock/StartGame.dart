@@ -1,5 +1,6 @@
 import 'package:vector_math/vector_math.dart';
 
+import '../../entity/Entity.dart';
 import 'GamePacket.dart';
 import '../../utils/Gamerule.dart';
 import 'Protocol.dart';
@@ -61,6 +62,9 @@ class StartGame extends GamePacket {
   bool behaviourPackLocked = false; // bool
   bool resourcePackLocked = false; // bool
   bool worldTemplateLocked = false; // bool
+  bool useMsaGamertags = false; // bool
+  bool hasWorldTemplate = false; // bool
+  bool worldTemplateOptionLocked = false; // bool
 
   String levelId = ''; // string, base64
   String worldName = ''; // string
@@ -83,32 +87,52 @@ class StartGame extends GamePacket {
     this.getStream().writeUnsignedVarLong(this.runtimeId);
     this.getStream().writeVarInt(this.gamemode);
     this.getStream().writeVector3Float(this.position);
-    this.getStream().writeFloat(this.pitch);
-    this.getStream().writeFloat(this.yaw);
+    this.getStream().writeLFloat(this.pitch);
+    this.getStream().writeLFloat(this.yaw);
     this.getStream().writeVarInt(this.seed);
     this.getStream().writeVarInt(this.dimension);
     this.getStream().writeVarInt(this.generator);
     this.getStream().writeVarInt(this.worldGamemode);
     this.getStream().writeVarInt(this.difficulty);
-    this.getStream().writeVector3VarInt(this.spawnPosition);
+    this.getStream().writePosition(this.spawnPosition);
     this.getStream().writeBoolean(this.allowCheats);
     this.getStream().writeVarInt(this.time);
     this.getStream().writeBoolean(this.edition == 1);
     this.getStream().writeBoolean(this.allowEduFeatures);
-    this.getStream().writeFloat(this.rainLevel);
-    this.getStream().writeFloat(this.lightningLevel);
+    this.getStream().writeLFloat(this.rainLevel);
+    this.getStream().writeLFloat(this.lightningLevel);
     this.getStream().writeBoolean(this.hasLockedContent);
     this.getStream().writeBoolean(this.isMultiplayer);
     this.getStream().writeBoolean(this.broadcasToLAN);
-    this.getStream().writeBoolean(this.broadcastToXboxLive);
+    this.getStream().writeVarInt(this.xboxLiveBroadcastMode);
+    this.getStream().writeVarInt(this.platformBroadcastMode);
     this.getStream().writeBoolean(this.allowCommands);
     this.getStream().writeBoolean(this.textureRequired);
     this.getStream().writeGamerules(this.rules);
     this.getStream().writeBoolean(this.allowBonusChest);
     this.getStream().writeBoolean(this.allowStartingMap);
-    this.getStream().writeBoolean(this.trustPlayers);
     this.getStream().writeVarInt(this.permissionLevel);
-    this.getStream().writeVarInt(this.xboxLiveBroadcastMode);
+    this.getStream().writeLInt(this.chunkRadius);
+    this.getStream().writeBoolean(this.behaviourPackLocked);
+    this.getStream().writeBoolean(this.resourcePackLocked);
+    this.getStream().writeBoolean(this.worldTemplateLocked);
+    this.getStream().writeBoolean(this.useMsaGamertags);
+    this.getStream().writeBoolean(this.hasWorldTemplate);
+    this.getStream().writeBoolean(this.worldTemplateOptionLocked);
+    this.getStream().writeString(this.levelId);
+    this.getStream().writeString(this.worldName);
+    this.getStream().writeString(this.worldTemplate);
+    this.getStream().writeBoolean(this.isTrial);
+    this.getStream().writeLLong(this.currentTick);
+    this.getStream().writeVarInt(this.enchantmentSeed);
+
+    this.getStream().writeUnsignedVarInt(Entity.runtimeIds.length);
+    for(final List item in Entity.runtimeIds) {
+      this.getStream().writeString(item[0]);
+      this.getStream().writeLShort(item[1]);
+    }
+
+    this.getStream().writeString(this.multiplayerCorrelationId);
   }
 
 }

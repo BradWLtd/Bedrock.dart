@@ -27,6 +27,7 @@ import 'raknet/NewIncomingConnection.dart';
 import 'Packet.dart';
 
 import 'bedrock/Login.dart';
+import 'bedrock/PlayStatusPacket.dart';
 
 class Client {
 
@@ -249,7 +250,7 @@ class Client {
   }
 
   void _handleConnectionRequest(ConnectionRequest packet) {
-    this.clientId = packet.clientId;
+    // this.clientId = packet.clientId;
 
     ConnectionRequestAccepted reply = ConnectionRequestAccepted();
     reply.address = this.address;
@@ -313,6 +314,8 @@ class Client {
     this._player.xuid = packet.xuid;
     this.protocol = packet.protocol;
 
+    PlayStatusPacket pk = PlayStatusPacket();
+    pk.status = PlayStatusPacket.LoginSuccess;
     
   }
   
