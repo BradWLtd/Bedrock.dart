@@ -26,7 +26,7 @@ class Server {
     this._rakNet = RakNet(this);
   }
 
-  listen(int port) {
+  void listen(int port) {
     RawDatagramSocket.bind(InternetAddress.anyIPv4, port).then((RawDatagramSocket socket) {
       this._logger.info('Listening on ${socket.address.address}:${socket.port}');
 
@@ -46,7 +46,7 @@ class Server {
     });
   }
 
-  handleOnMessage(BinaryStream stream, Address recipient) {
+  void handleOnMessage(BinaryStream stream, Address recipient) {
     final int packetId = stream.readByte();
     stream.offset = 0;
 
@@ -57,7 +57,7 @@ class Server {
     return DateTime.now().millisecondsSinceEpoch.floor() - this._startTime;
   }
 
-  send(Packet packet, Address address) {
+  void send(Packet packet, Address address) {
     this._socket.send(packet.encode().buffer.asInt8List(), new InternetAddress(address.ip), address.port);
   }
 }

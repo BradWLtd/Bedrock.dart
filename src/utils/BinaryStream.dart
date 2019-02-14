@@ -1,7 +1,9 @@
 import 'dart:typed_data';
 import 'package:typed_data/typed_buffers.dart';
+import 'package:vector_math/vector_math.dart';
 
 import 'Address.dart';
+import 'Gamerule.dart';
 import '../net/raknet/Protocol.dart';
 
 class BinaryStream {
@@ -347,6 +349,72 @@ class BinaryStream {
     stream.offset = 0;
 
     return stream;
+  }
+
+  void writeUnsignedVarLong(int v) {
+    for(int i = 0; i < 10; i++) {
+      if((v >> 7) != 0) {
+        this.writeByte(v | 0x80);
+      } else {
+        this.writeByte(v & 0x7f);
+        break;
+      }
+
+      v >>= 7;
+    }
+  }
+
+  void writeUnsignedVarInt(int v) {
+    for(int i = 0; i < 5; i++) {
+      if((v >> 7) != 0) {
+        this.writeByte(v | 0x80);
+      } else {
+        this.writeByte(v & 0x7f);
+        break;
+      }
+
+      v >>= 7;
+    }
+  }
+
+  void writeVarLong(int v) {
+    return this.writeUnsignedVarLong((v << 1) ^ (v >> 63));
+  }
+
+  void writeVarInt(int v) {
+    v <<= 32 >> 32;
+    this.writeUnsignedVarInt((v << 1) ^ (v >> 31));
+  }
+
+  void writeVector3Float(Vector3 v3) {
+    this.writeFloat(v3.x);
+    this.writeFloat(v3.y);
+    this.writeFloat(v3.z);
+  }
+
+  void writeVector3VarInt(Vector3 v3) {
+    this.writeVarInt(v3.x.toInt());
+    this.writeVarInt(v3.y.toInt());
+    this.writeVarInt(v3.z.toInt());
+  }
+
+  void writeGamerule(Gamerule rule) {
+    this.writeString(rule.name);
+    this.writeByte(rule.type);
+
+    if(rule.type == GameruleType.Boolean) this.writeBoolean(rule.value);
+    if(rule.type == GameruleType.Integer) this.writeUnsignedVarInt(rule.value);
+    if(rule.type == GameruleType.Float) this.writeFloat(rule.value);
+  }
+
+  void writeGamerules(List<Gamerule> rules) {
+    rules.forEach(this.writeGamerule);
+  }
+
+  void writeLFloat(double v) {
+    this.endian = Endian.little;
+    this.writeFloat(v);
+    this.endian = Endian.big;
   }
 
 }

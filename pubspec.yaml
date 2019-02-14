@@ -5,3 +5,4 @@ dependencies:
   typed_data: 1.1.6
   archive: 2.0.8
   corsac_jwt: 0.1.2
+  vector_math: 2.0.8

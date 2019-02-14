@@ -5,8 +5,9 @@ import 'package:archive/archive.dart';
 import 'package:archive/archive_io.dart';
 
 import '../utils/Address.dart';
-import 'bedrock/Protocol.dart' as Bedrock;
 import '../utils/Logger.dart';
+import '../Player.dart';
+import 'bedrock/Protocol.dart' as Bedrock;
 import 'raknet/Protocol.dart';
 import 'Reliability.dart';
 import 'RakNet.dart';
@@ -29,7 +30,7 @@ import 'bedrock/Login.dart';
 
 class Client {
 
-  int clientId;
+  int protocol;
 
   Address address;
 
@@ -55,6 +56,8 @@ class Client {
   Datagram packetQueue = Datagram();
   Map<int, Datagram> recoveryQueue = {};
   List<Datagram> datagramQueue = [];
+
+  Player _player;
 
   Client(Address this.address, int this.mtuSize, Server this._server, RakNet this._raknet) {
     const tickDuration = const Duration(milliseconds: 500);
@@ -260,6 +263,8 @@ class Client {
 
   void _handleNewIncomingConnection(NewIncomingConnection packet) {
     // TODO: Add state and set it to connected here
+    this._player = Player(this);
+
     this._sendPing();
   }
 
@@ -302,6 +307,13 @@ class Client {
 
   void _handleLogin(Login packet) {
     this._logger.debug('Got login. Username: ${packet.username}');
+
+    this._player.username = this._player.displayName = packet.username;
+    this._player.uuid = packet.clientUUID;
+    this._player.xuid = packet.xuid;
+    this.protocol = packet.protocol;
+
+    
   }
   
 }
