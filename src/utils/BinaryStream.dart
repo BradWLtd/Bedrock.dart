@@ -7,7 +7,6 @@ import 'Gamerule.dart';
 import '../net/raknet/Protocol.dart';
 
 class BinaryStream {
-
   /*
    * 
    * https://gitlab.com/mark-nordine/byte_array
@@ -18,8 +17,7 @@ class BinaryStream {
   Endian endian;
   int _offset = 0;
 
-  BinaryStream([int length = 0, endian = Endian.big])
-  {
+  BinaryStream([int length = 0, endian = Endian.big]) {
     this.endian = endian;
     final buff = Uint8Buffer(length);
     _byteData = ByteData.view(buff.buffer);
@@ -28,8 +26,7 @@ class BinaryStream {
   BinaryStream.fromByteData(this._byteData, [this.endian = Endian.little]);
 
   factory BinaryStream.fromBuffer(ByteBuffer buffer,
-      [int offset = 0, int length = null, Endian endian = Endian.little])
-  {
+      [int offset = 0, int length = null, Endian endian = Endian.little]) {
     length ??= buffer.lengthInBytes - offset;
 
     final view = ByteData.view(buffer, offset, length);
@@ -73,8 +70,10 @@ class BinaryStream {
   double readFloat() => _getNum<double>(_byteData.getFloat32, 4);
   double readDouble() => _getNum<double>(_byteData.getFloat64, 8);
 
-  void writeSignedByte(int value) => _setNum<int>((i, v, _) => _byteData.setInt8(i, v), value, 1);
-  void writeByte(int value) => _setNum<int>((i, v, _) => _byteData.setUint8(i, v), value, 1);
+  void writeSignedByte(int value) =>
+      _setNum<int>((i, v, _) => _byteData.setInt8(i, v), value, 1);
+  void writeByte(int value) =>
+      _setNum<int>((i, v, _) => _byteData.setUint8(i, v), value, 1);
 
   /// Writes [int], 1 if true, zero if false
   void writeBoolean(bool value) => writeByte(value ? 1 : 0);
@@ -92,27 +91,23 @@ class BinaryStream {
   void writeDouble(double value) => _setNum(_byteData.setFloat64, value, 8);
 
   /// Get byte at given index
-  int operator [] (int i) => _byteData.getInt8(i);
+  int operator [](int i) => _byteData.getInt8(i);
 
   /// Set byte at given index
-  void operator []= (int i, int value) => _byteData.setInt8(i, value);
+  void operator []=(int i, int value) => _byteData.setInt8(i, value);
 
   /// Appends [other] to [this]
-  BinaryStream operator + (BinaryStream other) =>
-    BinaryStream(length + other.length)
-      ..writeBytes(this)
-      ..writeBytes(other);
+  BinaryStream operator +(BinaryStream other) =>
+      BinaryStream(length + other.length)..writeBytes(this)..writeBytes(other);
 
-  Iterable<int> byteStream() sync*
-  {
+  Iterable<int> byteStream() sync* {
     while (offset < length) yield this[offset++];
   }
 
   /// Returns true if every byte in both [BinaryStream]s are equal
   /// Note: offsets will not be affected
   @override
-  bool operator == (Object otherObject)
-  {
+  bool operator ==(Object otherObject) {
     if (otherObject is! BinaryStream) return false;
 
     final BinaryStream other = otherObject;
@@ -125,15 +120,13 @@ class BinaryStream {
   }
 
   @override
-  int get hashCode
-  {
+  int get hashCode {
     final tempOffset = offset;
 
     const p = 16777619;
     var hash = 2166136261;
 
-    for (var i = 0; i < length; i++)
-      hash = (hash ^ this[i]) * p;
+    for (var i = 0; i < length; i++) hash = (hash ^ this[i]) * p;
 
     offset = tempOffset;
 
@@ -146,33 +139,32 @@ class BinaryStream {
   }
 
   /// Copies bytes from [bytes] to [this]
-  void writeBytes(BinaryStream bytes, [int offset = 0, int byteCount = 0])
-  {
+  void writeBytes(BinaryStream bytes, [int offset = 0, int byteCount = 0]) {
     if (byteCount == 0) byteCount = bytes.length;
 
     // Copy old offset so we can reset it after copy
     final oldOffset = bytes.offset;
     bytes.offset = offset;
 
-    for (var i = 0; i < byteCount; i++)
-      writeByte(bytes.readByte());
+    for (var i = 0; i < byteCount; i++) writeByte(bytes.readByte());
 
     bytes.offset = oldOffset;
   }
 
-  void _setNum<T extends num>(void Function(int, T, Endian) f, T value, int size)
-  {
+  void _setNum<T extends num>(
+      void Function(int, T, Endian) f, T value, int size) {
     if (_offset + size > length)
-      throw RangeError('attempted to write to offset ${_offset + size}, length is $length');
+      throw RangeError(
+          'attempted to write to offset ${_offset + size}, length is $length');
 
     f(offset, value, endian);
     _offset += size;
   }
 
-  T _getNum<T extends num>(T Function(int, Endian) f, int size)
-  {
+  T _getNum<T extends num>(T Function(int, Endian) f, int size) {
     if (_offset + size > length)
-      throw RangeError('attempted to read from offset ${_offset + size}, length is $length');
+      throw RangeError(
+          'attempted to read from offset ${_offset + size}, length is $length');
 
     final data = f(_offset, endian);
     _offset += size;
@@ -186,8 +178,7 @@ class BinaryStream {
   int get bytesAvailable => length - _offset;
 
   int get offset => _offset;
-  set offset(int value)
-  {
+  set offset(int value) {
     if (value < 0 || value > length)
       throw RangeError('attempting to set offset to $value, length is $length');
 
@@ -203,7 +194,7 @@ class BinaryStream {
   static from(List<int> data) {
     BinaryStream value = new BinaryStream(data.length);
 
-    for(final int part in data) {
+    for (final int part in data) {
       value.writeByte(part);
     }
 
@@ -214,7 +205,7 @@ class BinaryStream {
   BinaryStream read(int len) {
     BinaryStream value = new BinaryStream(len);
 
-    for(int i = 0; i < len; i++) {
+    for (int i = 0; i < len; i++) {
       value.writeByte(this.readByte());
     }
 
@@ -225,7 +216,7 @@ class BinaryStream {
   int readUnsignedVarInt() {
     int value = 0;
 
-    for(int i = 0; i <= 28; i += 7) {
+    for (int i = 0; i <= 28; i += 7) {
       int b = this.readByte();
       value |= ((b & 0x7f) << i);
 
@@ -236,9 +227,9 @@ class BinaryStream {
 
     return 0;
   }
-  
-  String readString([ int len ]) {
-    if(len == null) len = this.readUnsignedVarInt();
+
+  String readString([int len]) {
+    if (len == null) len = this.readUnsignedVarInt();
     BinaryStream stream = this.read(len);
     List<int> chars = stream.buffer.asUint8List();
     return String.fromCharCodes(chars);
@@ -252,7 +243,7 @@ class BinaryStream {
     this.writeBytesList(val.codeUnits);
   }
 
-  void append(BinaryStream arr) {    
+  void append(BinaryStream arr) {
     this.writeBytesList(new Uint8List.view(arr.buffer));
   }
 
@@ -260,7 +251,7 @@ class BinaryStream {
     int one = this.readByte();
     int two = this.readByte();
     int three = this.readByte();
-    
+
     return one + two * 2 ^ 8 + three * 2 ^ 16;
   }
 
@@ -287,7 +278,6 @@ class BinaryStream {
     return val;
   }
 
-  
   int readLInt() {
     this.endian = Endian.little;
     int val = this.readInt();
@@ -297,12 +287,12 @@ class BinaryStream {
 
   Address readAddress() {
     Address addr = new Address('', 0, AddressFamily.V4);
-    
+
     int family = this.readByte();
-    switch(family) {
+    switch (family) {
       case 4:
         List<int> ipParts = [];
-        for(int i = 0; i < 4; i++) {
+        for (int i = 0; i < 4; i++) {
           ipParts.add(~this.readByte() & 0xff);
         }
         addr.ip = ipParts.join('.');
@@ -320,10 +310,12 @@ class BinaryStream {
   }
 
   void writeAddress(Address address) {
-    switch(address.family) {
+    switch (address.family) {
       case AddressFamily.V4:
         this.writeByte(4);
-        address.ip.split('.').forEach((b) => this.writeByte(~int.parse(b) & 0xff));
+        address.ip
+            .split('.')
+            .forEach((b) => this.writeByte(~int.parse(b) & 0xff));
         this.writeShort(address.port);
         break;
       default:
@@ -332,16 +324,16 @@ class BinaryStream {
   }
 
   void writeBytesList(List<int> bytes) {
-    for(final int byte in bytes) {
+    for (final int byte in bytes) {
       this.writeByte(byte);
     }
   }
 
-  Uint8List readBytes(int length, [ int offset ]) {
+  Uint8List readBytes(int length, [int offset]) {
     return Uint8List.view(this.buffer, offset ?? this.offset, length);
   }
 
-  BinaryStream slice(int length, [ int offset ]) {
+  BinaryStream slice(int length, [int offset]) {
     final bytes = this.readBytes(length, offset);
     BinaryStream stream = BinaryStream(length);
     stream.writeBytesList(bytes);
@@ -351,8 +343,8 @@ class BinaryStream {
   }
 
   void writeUnsignedVarLong(int v) {
-    for(int i = 0; i < 10; i++) {
-      if((v >> 7) != 0) {
+    for (int i = 0; i < 10; i++) {
+      if ((v >> 7) != 0) {
         this.writeByte(v | 0x80);
       } else {
         this.writeByte(v & 0x7f);
@@ -364,8 +356,8 @@ class BinaryStream {
   }
 
   void writeUnsignedVarInt(int v) {
-    for(int i = 0; i < 5; i++) {
-      if((v >> 7) != 0) {
+    for (int i = 0; i < 5; i++) {
+      if ((v >> 7) != 0) {
         this.writeByte(v | 0x80);
       } else {
         this.writeByte(v & 0x7f);
@@ -407,9 +399,9 @@ class BinaryStream {
     this.writeString(rule.name);
     this.writeByte(rule.type);
 
-    if(rule.type == GameruleType.Boolean) this.writeBoolean(rule.value);
-    if(rule.type == GameruleType.Integer) this.writeUnsignedVarInt(rule.value);
-    if(rule.type == GameruleType.Float) this.writeFloat(rule.value);
+    if (rule.type == GameruleType.Boolean) this.writeBoolean(rule.value);
+    if (rule.type == GameruleType.Integer) this.writeUnsignedVarInt(rule.value);
+    if (rule.type == GameruleType.Float) this.writeFloat(rule.value);
   }
 
   void writeGamerules(List<Gamerule> rules) {
@@ -439,5 +431,4 @@ class BinaryStream {
     this.writeShort(v);
     this.endian = Endian.big;
   }
-
 }

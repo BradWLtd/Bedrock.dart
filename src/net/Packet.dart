@@ -1,14 +1,20 @@
 import '../utils/BinaryStream.dart';
 
 abstract class Packet {
+  bool decoded = false;
+  bool encoded = false;
+
+  BinaryStream encodedStream;
+
   int _id;
 
   BinaryStream _stream;
 
   int _streamLength;
 
-  Packet(int id, [ int this._streamLength = 10240 ]) {
+  Packet(int id, [int this._streamLength = 10240]) {
     this._id = id;
+    this.encodedStream = this.generateStream();
   }
 
   int getId() {
@@ -35,6 +41,8 @@ abstract class Packet {
     this.decodeHeader();
     this.decodeBody();
 
+    this.decoded = true;
+
     return this;
   }
 
@@ -42,24 +50,29 @@ abstract class Packet {
     this._id = this.getStream().readByte();
   }
 
-  void decodeBody() {
-
-  }
+  void decodeBody() {}
 
   BinaryStream encode() {
-    this.setStream(new BinaryStream(this._streamLength));
+    this.setStream(this.generateStream());
     this.encodeHeader();
     this.encodeBody();
     int offset = this.getStream().offset;
     this.getStream().offset = 0;
-    return this.getStream().read(offset);
+    BinaryStream stream = this.getStream().read(offset);
+
+    this.encoded = true;
+    this.encodedStream = stream;
+
+    return stream;
   }
 
   void encodeHeader() {
     this.getStream().writeByte(this.getId());
   }
 
-  void encodeBody() {
+  void encodeBody() {}
 
+  BinaryStream generateStream() {
+    return BinaryStream(this._streamLength);
   }
 }

@@ -1,20 +1,17 @@
 import 'dart:async';
-import 'dart:convert';
-import 'dart:typed_data';
-import 'package:archive/archive.dart';
-import 'package:archive/archive_io.dart';
 
 import '../utils/Address.dart';
 import '../utils/Logger.dart';
 import '../Player.dart';
-import 'bedrock/Protocol.dart' as Bedrock;
+import 'bedrock/GamePacket.dart';
+import 'bedrock/PlayStatus.dart';
+import 'bedrock/ResourcePacksInfo.dart';
 import 'raknet/Protocol.dart';
 import 'Reliability.dart';
 import 'RakNet.dart';
 import '../Server.dart';
 
 import 'raknet/ACK.dart';
-import '../utils/BinaryStream.dart';
 import 'raknet/ConnectionRequest.dart';
 import 'raknet/ConnectionRequestAccepted.dart';
 import 'raknet/ConnectedPing.dart';
@@ -27,10 +24,8 @@ import 'raknet/NewIncomingConnection.dart';
 import 'Packet.dart';
 
 import 'bedrock/Login.dart';
-import 'bedrock/PlayStatusPacket.dart';
 
 class Client {
-
   int protocol;
 
   Address address;
@@ -60,12 +55,13 @@ class Client {
 
   Player _player;
 
-  Client(Address this.address, int this.mtuSize, Server this._server, RakNet this._raknet) {
+  Client(Address this.address, int this.mtuSize, Server this._server,
+      RakNet this._raknet) {
     const tickDuration = const Duration(milliseconds: 500);
     this._tickInterval = Timer.periodic(tickDuration, this._tick);
   }
 
-  void disconnect([ String reason = 'Client disconnection' ]) {
+  void disconnect([String reason = 'Client disconnection']) {
     this._raknet.removeClient(this);
     this._tickInterval.cancel();
   }
@@ -73,36 +69,33 @@ class Client {
   void _tick(Timer timer) {
     // TODO: Last update check
 
-    if(this.ackQueue.ids.length > 0) {
+    if (this.ackQueue.ids.length > 0) {
       this._server.send(this.ackQueue, this.address);
       this.ackQueue.reset();
     }
 
-    if(this.nakQueue.ids.length > 0) {
+    if (this.nakQueue.ids.length > 0) {
       this._server.send(this.nakQueue, this.address);
       this.nakQueue.reset();
     }
 
-    if(this.datagramQueue.length > 0) {
+    if (this.datagramQueue.length > 0) {
       final int limit = 16;
 
-      for(int i = 0; i < this.datagramQueue.length; i++) {
-        if(i > limit) break;
-
+      for (int i = 0; i < this.datagramQueue.length && i < limit; i++) {
         this._server.send(this.datagramQueue[i], this.address);
         this.datagramQueue.removeAt(i);
       }
     }
 
-    // TODO: Recovery Queue send
-    if(this.recoveryQueue.length > 0) {
+    if (this.recoveryQueue.length > 0) {
       this.recoveryQueue.forEach((seq, pk) {
         this.datagramQueue.add(pk);
         this.recoveryQueue.remove(seq);
       });
     }
 
-    if(this.packetQueue.packets.length > 0) {
+    if (this.packetQueue.packets.length > 0) {
       this._sendPacketQueue();
     }
   }
@@ -111,7 +104,7 @@ class Client {
     this._lastTransaction = DateTime.now();
   }
 
-  void _sendPing([ int reliability = Reliability.Unreliable ]) {
+  void _sendPing([int reliability = Reliability.Unreliable]) {
     ConnectedPing packet = ConnectedPing();
     packet.sendPingTime = this._server.getTime();
     packet.reliability = reliability;
@@ -121,48 +114,49 @@ class Client {
 
   void _sendPacketQueue() {
     this.packetQueue.sequenceNumber = this.sequenceNumber++;
-    // TODO: Recovery queue business
 
     this._server.send(this.packetQueue, this.address);
     this.packetQueue.reset();
   }
 
-  void _addToQueue(EncapsulatedPacket packet, [ bool immediate = false ]) {
-    if((this.packetQueue.byteLength + packet.getStream().length) > (this.mtuSize - 36)) {
+  void _addToQueue(EncapsulatedPacket packet, [bool immediate = false]) {
+    if ((this.packetQueue.byteLength + packet.getStream().length) >
+        (this.mtuSize - 36)) {
       this._sendPacketQueue();
     }
 
-    if(packet.needsACK) {
-      // TODO: Implement this
+    if (packet.needsACK) {
       this._logger.error('Packet needs ACK: ${packet.getId()}');
     }
 
     this.packetQueue.packets.add(packet);
 
-    if(immediate) {
+    if (immediate) {
       this._sendPacketQueue();
     }
   }
 
-  void _queueEncapsulatedPacket(EncapsulatedPacket packet, [ bool immediate = false ]) {
-    if(packet.getStream() == null) {
+  void _queueEncapsulatedPacket(EncapsulatedPacket packet,
+      [bool immediate = false]) {
+    if (!packet.encoded) {
       packet.encode();
     }
 
-    if(packet.isOrdered()) {
+    if (packet.isOrdered()) {
       packet.orderIndex = this.orderedIndex[packet.orderChannel]++;
-    } else if(packet.isSequenced()) {
+    } else if (packet.isSequenced()) {
       packet.orderIndex = this.orderedIndex[packet.orderChannel];
       packet.sequenceIndex = this.sequencedIndex[packet.orderChannel]++;
     }
 
     int maxSize = this.mtuSize - 60;
 
-    if(packet.getStream().writtenLength > maxSize) {
+    if (packet.getStream().writtenLength > maxSize) {
       // TODO: Split packet
-      this._logger.error('Packet length out of range: ${packet.getId()} (${packet.getStream().length})');
+      this._logger.error(
+          'Packet length out of range: ${packet.getId()} (${packet.getStream().length})');
     } else {
-      if(packet.isReliable()) {
+      if (packet.isReliable()) {
         packet.messageIndex = this.messageIndex++;
       }
 
@@ -175,12 +169,14 @@ class Client {
 
     int diff = datagram.sequenceNumber - this.lastSequenceNumber;
 
-    if(this.nakQueue.ids.length > 0) {
+    if (this.nakQueue.ids.length > 0) {
       int index = this.nakQueue.ids.indexOf(datagram.sequenceNumber);
-      if(index != -1) this.nakQueue.ids.removeAt(index);
+      if (index != -1) this.nakQueue.ids.removeAt(index);
 
-      if(diff != 1) {
-        for(int i = this.lastSequenceNumber + 1; i < datagram.sequenceNumber; i++) {
+      if (diff != 1) {
+        for (int i = this.lastSequenceNumber + 1;
+            i < datagram.sequenceNumber;
+            i++) {
           this.nakQueue.ids.add(i);
         }
       }
@@ -188,11 +184,11 @@ class Client {
 
     this.ackQueue.ids.add(datagram.sequenceNumber);
 
-    if(diff >= 1) {
+    if (diff >= 1) {
       this.lastSequenceNumber = datagram.sequenceNumber;
     }
 
-    for(final EncapsulatedPacket packet in datagram.packets) {
+    for (final EncapsulatedPacket packet in datagram.packets) {
       this._handleEncapsulatedPacket(packet);
     }
   }
@@ -200,19 +196,20 @@ class Client {
   void handlePacket(Packet packet) {
     this._registerTransaction();
 
-    if(packet is EncapsulatedPacket) return this._handleEncapsulatedPacket(packet);
+    if (packet is EncapsulatedPacket)
+      return this._handleEncapsulatedPacket(packet);
 
-    if(packet is ACK) {
+    if (packet is ACK) {
       this._logger.debug('GOT ACK');
-      for(final int id in packet.ids) {
-        if(this.recoveryQueue.containsKey(id)) this.recoveryQueue.remove(id);
+      for (final int id in packet.ids) {
+        if (this.recoveryQueue.containsKey(id)) this.recoveryQueue.remove(id);
       }
     }
 
-    if(packet is NAK) {
+    if (packet is NAK) {
       this._logger.debug('GOT NAK');
-      for(final int id in packet.ids) {
-        if(this.recoveryQueue.containsKey(id)) {
+      for (final int id in packet.ids) {
+        if (this.recoveryQueue.containsKey(id)) {
           this.datagramQueue.add(this.recoveryQueue[id]);
           this.recoveryQueue.remove(id);
         }
@@ -223,15 +220,17 @@ class Client {
   void _handleEncapsulatedPacket(EncapsulatedPacket packet) {
     final int packetId = packet.getId();
 
-    switch(packetId) {
+    switch (packetId) {
       case Protocol.DisconnectionNotification:
         this.disconnect();
         break;
       case Protocol.ConnectionRequest:
-        this._handleConnectionRequest(ConnectionRequest().decode(packet.getStream()));
+        this._handleConnectionRequest(
+            ConnectionRequest().decode(packet.getStream()));
         break;
       case Protocol.NewIncomingConnection:
-        this._handleNewIncomingConnection(NewIncomingConnection().decode(packet.getStream()));
+        this._handleNewIncomingConnection(
+            NewIncomingConnection().decode(packet.getStream()));
         break;
       case Protocol.ConnectedPing:
         this._handleConnectedPing(ConnectedPing().decode(packet.getStream()));
@@ -243,7 +242,8 @@ class Client {
         this._handleGamePacket(GamePacketWrapper().decode(packet.getStream()));
         break;
       default:
-        this._logger.error('Got unknown EncapsulatedPacket: ${packetId} (${this._logger.byte(packetId)})');
+        this._logger.error(
+            'Got unknown EncapsulatedPacket: ${packetId} (${this._logger.byte(packetId)})');
         this._logger.error(this._logger.bin(packet.getStream()));
     }
   }
@@ -281,24 +281,23 @@ class Client {
     // Cool!
   }
 
-  void _handleGamePacket(GamePacketWrapper packet) {
-    Uint8List bytes = packet.getStream().readBytes(packet.getStream().length - 1, 1);
-    List<int> payload = ZLibDecoder().decodeBytes(bytes);
-    BinaryStream pStream = BinaryStream.fromBytes(payload);
-
-    while(!pStream.feof()) {
-      BinaryStream stream = BinaryStream.fromString(pStream.readString());
-      final int packetId = new Uint8List.view(stream.buffer)[0];
-
-      switch(packetId) {
-        case Bedrock.Protocol.Login:
-          this._handleLogin(Login().decode(stream));
-          break;
-        default:
-          this._logger.error('Got unknown GamePacket: ${packetId} (${this._logger.byte(packetId)})');
-          this._logger.error(this._logger.bin(stream));
+  void _handleGamePacket(GamePacketWrapper wrapper) {
+    for (final GamePacket packet in wrapper.packets) {
+      if (packet is Login)
+        this._handleLogin(packet);
+      else {
+        this._logger.error(
+            'Got unknown decoded GamePacket: ${packet.getId()} (${this._logger.byte(packet.getId())})');
       }
     }
+  }
+
+  void _sendGamePacket(GamePacket packet,
+      [bool needsAck = false, bool immediate = false]) {
+    GamePacketWrapper wrapper = GamePacketWrapper();
+    wrapper.packets.add(packet);
+
+    this._queueEncapsulatedPacket(wrapper);
   }
 
   void _handleLogin(Login packet) {
@@ -309,9 +308,12 @@ class Client {
     this._player.xuid = packet.xuid;
     this.protocol = packet.protocol;
 
-    PlayStatusPacket pk = PlayStatusPacket();
-    pk.status = PlayStatusPacket.LoginSuccess;
-    
+    PlayStatus playStatus = PlayStatus();
+    playStatus.status = PlayStatus.LoginSuccess;
+
+    this._sendGamePacket(playStatus);
+
+    ResourcePacksInfo packsInfo = ResourcePacksInfo();
+    this._sendGamePacket(packsInfo);
   }
-  
 }

@@ -1,7 +1,5 @@
-import '../raknet/EncapsulatedPacket.dart';
+import '../Packet.dart';
 
-abstract class GamePacket extends EncapsulatedPacket {
-
+abstract class GamePacket extends Packet {
   GamePacket(int id) : super(id);
-
 }

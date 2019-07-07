@@ -5,7 +5,6 @@ import 'Protocol.dart';
 import '../Packet.dart';
 
 class Datagram extends Packet {
-
   List<EncapsulatedPacket> packets = [];
 
   int flags = 0;
@@ -15,7 +14,7 @@ class Datagram extends Packet {
   bool continuousSend = false;
   bool needsBAndS = false;
 
-  Datagram([ int id = Protocol.DataPacketFour ]) : super(id);
+  Datagram([int id = Protocol.DataPacketFour]) : super(id);
 
   void encodeHeader() {
     this.getStream().writeByte(BitFlag.Valid | this.flags);
@@ -23,9 +22,11 @@ class Datagram extends Packet {
 
   void encodeBody() {
     this.getStream().writeLTriad(this.sequenceNumber);
-    
-    for(final EncapsulatedPacket packet in this.packets) {
-      this.getStream().append(packet.encode());
+
+    for (final EncapsulatedPacket packet in this.packets) {
+      this
+          .getStream()
+          .append(packet.encoded ? packet.encodedStream : packet.encode());
     }
   }
 
@@ -38,10 +39,10 @@ class Datagram extends Packet {
 
     this.sequenceNumber = stream.readLTriad();
 
-    while(!stream.feof()) {
+    while (!stream.feof()) {
       EncapsulatedPacket packet = EncapsulatedPacket.from(stream);
 
-      if(packet.getStream().length < 1) break;
+      if (packet.getStream().length < 1) break;
 
       this.packets.add(packet);
     }
@@ -56,10 +57,9 @@ class Datagram extends Packet {
 
   int get byteLength {
     int length = 0;
-    for(final EncapsulatedPacket pk in this.packets) {
+    for (final EncapsulatedPacket pk in this.packets) {
       length += pk.getStream().length;
     }
     return length;
   }
-
 }

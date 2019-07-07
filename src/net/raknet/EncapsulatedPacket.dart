@@ -6,7 +6,6 @@ import 'Protocol.dart';
 import '../Reliability.dart';
 
 class EncapsulatedPacket extends Packet {
-
   int flags = Protocol.DataPacketFour;
 
   int reliability = 0;
@@ -17,43 +16,46 @@ class EncapsulatedPacket extends Packet {
   int splitCount = 0;
   int splitId = 0;
   int splitIndex = 0;
-  
+
   int sequenceIndex = 0;
-  
+
   int orderIndex = 0;
   int orderChannel = 0;
 
   bool needsACK = false;
 
-  EncapsulatedPacket([ int id = 0 ]) : super(id);
+  EncapsulatedPacket([int id = 0]) : super(id);
 
   BinaryStream encode() {
     BinaryStream stream = new BinaryStream(1024);
 
     int flags = this.reliability << 5;
-    if(this.hasSplit) flags = flags |= BitFlag.HasSplit;
+    if (this.hasSplit) flags = flags |= BitFlag.HasSplit;
 
     BinaryStream packetStream = super.encode();
 
     stream.writeByte(flags);
     stream.writeShort(packetStream.length << 3);
 
-    if(this.isReliable()) stream.writeLTriad(this.messageIndex);
+    if (this.isReliable()) stream.writeLTriad(this.messageIndex);
 
-    if(this.isSequenced()) stream.writeLTriad(this.sequenceIndex);
+    if (this.isSequenced()) stream.writeLTriad(this.sequenceIndex);
 
-    if(this.isSequencedOrOrdered()) {
+    if (this.isSequencedOrOrdered()) {
       stream.writeLTriad(this.orderIndex);
       stream.writeByte(this.orderChannel);
     }
 
-    if(this.hasSplit) {
+    if (this.hasSplit) {
       stream.writeInt(this.splitCount);
       stream.writeShort(this.splitId);
       stream.writeInt(this.splitIndex);
     }
 
     stream.append(packetStream);
+
+    this.encoded = true;
+    this.encodedStream = stream;
 
     return stream;
   }
@@ -67,61 +69,56 @@ class EncapsulatedPacket extends Packet {
 
     packet.length = (stream.readShort() / 8).ceil();
 
-    if(packet.isReliable()) {
+    if (packet.isReliable()) {
       packet.messageIndex = stream.readLTriad();
     }
 
-    if(packet.isSequenced()) {
+    if (packet.isSequenced()) {
       packet.sequenceIndex = stream.readLTriad();
     }
 
-    if(packet.isSequencedOrOrdered()) {
+    if (packet.isSequencedOrOrdered()) {
       packet.orderIndex = stream.readLTriad();
       packet.orderChannel = stream.readByte();
     }
 
-    if(packet.hasSplit) {
+    if (packet.hasSplit) {
       packet.splitCount = stream.readInt();
       packet.splitId = stream.readShort();
       packet.splitIndex = stream.readInt();
     }
 
-    packet.setStream(packet.length > (stream.length - stream.offset) ? new BinaryStream() : stream.read(packet.length)); 
+    packet.setStream(packet.length > (stream.length - stream.offset)
+        ? new BinaryStream()
+        : stream.read(packet.length));
 
-    if(packet.getStream().length > 0) {
+    if (packet.getStream().length > 0) {
       packet.setId(packet.getStream().readByte());
       packet.getStream().offset = 0;
     }
-    
+
     return packet;
   }
 
   bool isReliable() {
-    return (
-      this.reliability == Reliability.Reliable ||
-      this.reliability == Reliability.ReliableOrdered ||
-      this.reliability == Reliability.ReliableSequenced ||
-      this.reliability == Reliability.ReliableACK ||
-      this.reliability == Reliability.ReliableOrderedACK
-    );
+    return (this.reliability == Reliability.Reliable ||
+        this.reliability == Reliability.ReliableOrdered ||
+        this.reliability == Reliability.ReliableSequenced ||
+        this.reliability == Reliability.ReliableACK ||
+        this.reliability == Reliability.ReliableOrderedACK);
   }
 
   bool isSequenced() {
-    return (
-      this.reliability == Reliability.UnreliableSequenced ||
-      this.reliability == Reliability.ReliableSequenced
-    );
+    return (this.reliability == Reliability.UnreliableSequenced ||
+        this.reliability == Reliability.ReliableSequenced);
   }
 
   bool isOrdered() {
-    return (
-      this.reliability == Reliability.ReliableOrdered ||
-      this.reliability == Reliability.ReliableOrderedACK
-    );
+    return (this.reliability == Reliability.ReliableOrdered ||
+        this.reliability == Reliability.ReliableOrderedACK);
   }
 
   bool isSequencedOrOrdered() {
     return this.isSequenced() || this.isOrdered();
   }
-
 }
