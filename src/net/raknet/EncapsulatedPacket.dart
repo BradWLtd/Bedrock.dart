@@ -1,6 +1,5 @@
 import '../../utils/BinaryStream.dart';
 import '../../utils/BitFlag.dart';
-import '../../utils/Logger.dart';
 import '../Packet.dart';
 import 'Protocol.dart';
 import '../Reliability.dart';

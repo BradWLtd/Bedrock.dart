@@ -115,6 +115,13 @@ class Client {
   void _sendPacketQueue() {
     this.packetQueue.sequenceNumber = this.sequenceNumber++;
 
+    _logger.debug(
+        '-> GPs ${this.packetQueue.packets.expand((p) => p is GamePacketWrapper ? p.packets.map((p) => p.id) : [])}');
+    _logger.debug(
+        '-> ${this.packetQueue.packets.expand((p) => p is GamePacketWrapper ? [] : [
+            p.id
+          ])}');
+
     this._server.send(this.packetQueue, this.address);
     this.packetQueue.reset();
   }
@@ -126,7 +133,7 @@ class Client {
     }
 
     if (packet.needsACK) {
-      this._logger.error('Packet needs ACK: ${packet.getId()}');
+      this._logger.error('Packet needs ACK: ${packet.id}');
     }
 
     this.packetQueue.packets.add(packet);
@@ -154,7 +161,7 @@ class Client {
     if (packet.getStream().writtenLength > maxSize) {
       // TODO: Split packet
       this._logger.error(
-          'Packet length out of range: ${packet.getId()} (${packet.getStream().length})');
+          'Packet length out of range: ${packet.id} (${packet.getStream().length})');
     } else {
       if (packet.isReliable()) {
         packet.messageIndex = this.messageIndex++;
@@ -200,14 +207,14 @@ class Client {
       return this._handleEncapsulatedPacket(packet);
 
     if (packet is ACK) {
-      this._logger.debug('GOT ACK');
+      // this._logger.debug('GOT ACK');
       for (final int id in packet.ids) {
         if (this.recoveryQueue.containsKey(id)) this.recoveryQueue.remove(id);
       }
     }
 
     if (packet is NAK) {
-      this._logger.debug('GOT NAK');
+      // this._logger.debug('GOT NAK');
       for (final int id in packet.ids) {
         if (this.recoveryQueue.containsKey(id)) {
           this.datagramQueue.add(this.recoveryQueue[id]);
@@ -218,7 +225,7 @@ class Client {
   }
 
   void _handleEncapsulatedPacket(EncapsulatedPacket packet) {
-    final int packetId = packet.getId();
+    final int packetId = packet.id;
 
     switch (packetId) {
       case Protocol.DisconnectionNotification:
@@ -283,11 +290,13 @@ class Client {
 
   void _handleGamePacket(GamePacketWrapper wrapper) {
     for (final GamePacket packet in wrapper.packets) {
+      _logger.debug('<- GP ${packet.id}');
+
       if (packet is Login)
         this._handleLogin(packet);
       else {
         this._logger.error(
-            'Got unknown decoded GamePacket: ${packet.getId()} (${this._logger.byte(packet.getId())})');
+            'Got unknown decoded GamePacket: ${packet.id} (${this._logger.byte(packet.id)})');
       }
     }
   }
@@ -296,6 +305,8 @@ class Client {
       [bool needsAck = false, bool immediate = false]) {
     GamePacketWrapper wrapper = GamePacketWrapper();
     wrapper.packets.add(packet);
+
+    _logger.debug('~> GP ${packet.id}');
 
     this._queueEncapsulatedPacket(wrapper);
   }

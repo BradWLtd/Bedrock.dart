@@ -6,23 +6,18 @@ abstract class Packet {
 
   BinaryStream encodedStream;
 
-  int _id;
+  int id;
 
   BinaryStream _stream;
 
   int _streamLength;
 
-  Packet(int id, [int this._streamLength = 10240]) {
-    this._id = id;
+  Packet(this.id, [int this._streamLength = 10240]) {
     this.encodedStream = this.generateStream();
   }
 
-  int getId() {
-    return this._id;
-  }
-
   void setId(int val) {
-    this._id = val;
+    this.id = val;
   }
 
   BinaryStream getStream() {
@@ -47,7 +42,7 @@ abstract class Packet {
   }
 
   void decodeHeader() {
-    this._id = this.getStream().readByte();
+    this.id = this.getStream().readByte();
   }
 
   void decodeBody() {}
@@ -67,7 +62,7 @@ abstract class Packet {
   }
 
   void encodeHeader() {
-    this.getStream().writeByte(this.getId());
+    this.getStream().writeByte(this.id);
   }
 
   void encodeBody() {}

@@ -61,6 +61,8 @@ class RakNet {
       } else {
         Datagram datagram = Datagram().decode(stream);
 
+        _logger.debug('<- ${datagram.packets.map((p) => p.id)}');
+
         client.handlePackets(datagram);
       }
     } else {
